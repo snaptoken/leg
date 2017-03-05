@@ -1,0 +1,17 @@
+PATH
+  remote: .
+  specs:
+    leg (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  leg!
+
+BUNDLED WITH
+   1.14.4
