@@ -4,7 +4,7 @@ Command line tool that helps you make step-by-step programming walkthroughs.
 
 ## Install
 
-    $ gem install leg
+    $ gem install oleg
 
 ## Usage
 

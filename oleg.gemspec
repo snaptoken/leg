@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name        = 'leg'
+  s.name        = 'oleg'
   s.version     = '0.1.0'
   s.license     = 'MIT'
   s.summary     = 'tools for .leg files'
