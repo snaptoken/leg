@@ -36,7 +36,7 @@ class Leg::Commands::BaseCommand
     @steps ||= Dir[File.join(@config[:path], "*")].map do |f|
       name = File.basename(f)
       name if File.directory?(f) && name =~ /\A\d+(\.\d+)*(-\w+)*\z/
-    end.compact.sort_by { |s| s.split(".").map(&:to_i) }
+    end.compact.sort_by { |s| s.split(".").map(&:to_i) }.reject { |s| s.to_i.zero? }
   end
 
   def current_step
@@ -51,6 +51,13 @@ class Leg::Commands::BaseCommand
 
   def current_or_latest_step
     current_step || latest_step
+  end
+
+  def step_name(step)
+    parts = step.split('-')
+    if parts.length > 1
+      parts[1..-1].join('-')
+    end
   end
 
   def step_path(step)
