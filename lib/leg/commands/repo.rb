@@ -58,14 +58,18 @@ class Leg::Commands::Repo < Leg::Commands::BaseCommand
 
     File.write("repo/.git/hooks/post-commit", POST_COMMIT_HOOK)
     File.write("repo/.git/hooks/prepare-commit-msg", PREPARE_COMMIT_MSG_HOOK)
+    File.write("repo/.git/hooks/post-rewrite", POST_REWRITE_HOOK)
     FileUtils.chmod(0755, "repo/.git/hooks/post-commit")
     FileUtils.chmod(0755, "repo/.git/hooks/prepare-commit-msg")
+    FileUtils.chmod(0755, "repo/.git/hooks/post-rewrite")
 
     FileUtils.rm_r(steps)
   end
 
   POST_COMMIT_HOOK = <<~'EOF'
     #!/usr/bin/env ruby
+
+    exit if File.exist?(File.join(ENV['GIT_DIR'], '.git/rebase-merge'))
 
     require 'rugged'
 
@@ -76,12 +80,19 @@ class Leg::Commands::Repo < Leg::Commands::BaseCommand
     tags << parts.join('-') unless parts.empty?
 
     tags.each do |tag|
-      repo.references.create("refs/tags/#{tag}", commit.oid)
+      unless repo.tags[tag]
+        repo.references.create("refs/tags/#{tag}", commit.oid)
+      end
     end
   EOF
 
   PREPARE_COMMIT_MSG_HOOK = <<~'EOF'
     #!/usr/bin/env ruby
+
+    exit if File.exist?(File.join(ENV['GIT_DIR'], '.git/rebase-merge'))
+
+    msg = File.read(ARGV[0])
+    exit if !msg.lines.first.strip.empty?
 
     require 'rugged'
 
@@ -103,6 +114,26 @@ class Leg::Commands::Repo < Leg::Commands::BaseCommand
       msg = File.read(ARGV[0])
       msg = "#{step_num}-#{msg}"
       File.write(ARGV[0], msg)
+    end
+  EOF
+
+  POST_REWRITE_HOOK = <<~'EOF'
+    #!/usr/bin/env ruby
+
+    require 'rugged'
+
+    repo = Rugged::Repository.discover
+
+    tags = {}
+    repo.tags.each do |tag|
+      tags[tag.target.oid] = tag.name
+    end
+
+    while line = $stdin.gets
+      old_sha1, new_sha1 = line.split
+      if tags[old_sha1]
+        repo.references.update("refs/tags/#{tags[old_sha1]}", new_sha1)
+      end
     end
   EOF
 end

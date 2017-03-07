@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'oleg'
-  s.version     = '0.3.0'
+  s.version     = '0.4.0'
   s.license     = 'MIT'
   s.summary     = 'tools for .leg files'
   s.author      = 'Jeremy Ruten'

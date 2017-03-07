@@ -19,21 +19,16 @@ class Leg::Commands::Unrepo < Leg::Commands::BaseCommand
 
     repo = Rugged::Repository.new("repo")
 
-    tag_names = {}
-    repo.tags.each do |tag|
-      if tag.name !~ /\A\d+(\.\d+)*\z/
-        tag_names[tag.target.oid] = tag.name
-      end
-    end
-
     walker = Rugged::Walker.new(repo)
     walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
     walker.push(repo.branches.find { |b| b.name == "master" }.target)
     walker.each.with_index do |commit, idx|
       step = (idx + 1).to_s
       step_name = step
-      if tag_name = tag_names[commit.oid]
-        step_name += "-#{tag_name}"
+
+      parts = commit.message.lines.first.strip.split('-')
+      if parts.length >= 2
+        step_name += "-#{parts[1..-1].join('-')}"
       end
 
       step_path = File.join(@config[:path], step_name)
