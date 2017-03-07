@@ -12,7 +12,7 @@ class Leg::Commands::Run < Leg::Commands::BaseCommand
     needs! :config_run
 
     select_step(current_or_latest_step) do
-      shell_command(@config[:run], exec: true)
+      shell_command(@config[:run], *@args, exec: true)
     end
   end
 end

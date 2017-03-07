@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    leg (0.1.0)
+    oleg (0.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -11,7 +11,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  leg!
+  oleg!
 
 BUNDLED WITH
    1.14.4
