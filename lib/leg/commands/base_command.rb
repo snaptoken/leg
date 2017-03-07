@@ -14,10 +14,6 @@ class Leg::Commands::BaseCommand
 
   ERROR_MSG = {
     config: "You are not in a leg working directory.",
-    config_build: "Config file doesn't have build instructions.",
-    config_run: "Config file doesn't have run instructions.",
-    config_clean: "Config file doesn't have cleaning instructions.",
-    config_editor: "Config file doesn't specify a text editor."
   }
 
   def needs!(what)
@@ -26,14 +22,6 @@ class Leg::Commands::BaseCommand
     case what
     when :config
       valid = true if @config
-    when :config_build
-      valid = true if @config[:build]
-    when :config_run
-      valid = true if @config[:run]
-    when :config_clean
-      valid = true if @config[:clean]
-    when :config_editor
-      valid = true if @config[:editor]
     else
       raise NotImplementedError
     end
@@ -44,20 +32,10 @@ class Leg::Commands::BaseCommand
     end
   end
 
-  def shell_command(*cmd, exec: false, echo: true, exit_on_failure: true)
-    if exec
-      exec(*cmd)
-    else
-      puts cmd if echo
-      success = system(*cmd)
-      exit! if !success && exit_on_failure
-    end
-  end
-
   def steps
     @steps ||= Dir[File.join(@config[:path], "*")].map do |f|
       name = File.basename(f)
-      name if File.directory?(f) && name =~ /\A\d+(\.\d+)*\z/
+      name if File.directory?(f) && name =~ /\A\d+(\.\d+)*(-\w+)*\z/
     end.compact.sort_by { |s| s.split(".").map(&:to_i) }
   end
 

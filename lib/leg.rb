@@ -1,5 +1,6 @@
 require 'fileutils'
 require 'yaml'
+require 'rugged'
 
 module Leg
 end

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'oleg'
-  s.version     = '0.1.0'
+  s.version     = '0.2.0'
   s.license     = 'MIT'
   s.summary     = 'tools for .leg files'
   s.author      = 'Jeremy Ruten'
@@ -8,5 +8,7 @@ Gem::Specification.new do |s|
   s.files       = Dir['lib/**/*.rb']
   s.homepage    = 'https://github.com/yjerem/leg'
   s.executables << 'leg'
+
+  s.add_runtime_dependency 'rugged', '0.25.1.1'
 end
 
