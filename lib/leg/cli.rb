@@ -5,6 +5,7 @@ class Leg::CLI
     initial_dir = FileUtils.pwd
 
     last_dir = nil
+    last_dir2 = nil
     while FileUtils.pwd != last_dir
       if File.exist?(CONFIG_FILE)
         @config = YAML.load(File.read(CONFIG_FILE))
@@ -13,11 +14,12 @@ class Leg::CLI
           exit!
         end
         @config[:path] = FileUtils.pwd
-        @config[:step_path] = last_dir
+        @config[:step_path] = last_dir2
         @config[:orig_path] = initial_dir
         break
       end
 
+      last_dir2 = last_dir
       last_dir = FileUtils.pwd
       FileUtils.cd('..')
     end

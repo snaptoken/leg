@@ -17,26 +17,29 @@ class Leg::Commands::Unrepo < Leg::Commands::BaseCommand
       exit!
     end
 
+    if File.exist?("steps")
+      puts "Error: steps folder already exists!"
+      exit!
+    end
+
     repo = Rugged::Repository.new("repo")
 
     walker = Rugged::Walker.new(repo)
     walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
     walker.push(repo.branches.find { |b| b.name == "master" }.target)
     walker.each.with_index do |commit, idx|
-      step = (idx + 1).to_s
-      step_name = step
+      step_num = (idx + 1).to_s
+      step_name = commit.message.lines.first.strip
 
-      parts = commit.message.lines.first.strip.split('-')
-      if parts.length >= 2
-        step_name += "-#{parts[1..-1].join('-')}"
+      if step_name.empty?
+        step = step_num
+      else
+        step = "#{step_num}-#{step_name}"
       end
 
-      step_path = File.join(@config[:path], step_name)
-
-      repo.checkout(commit.oid, strategy: :force, target_directory: step_path)
+      repo.checkout(commit.oid, strategy: :force,
+                                target_directory: step_path(step))
     end
-
-    FileUtils.rm_r("repo")
   end
 end
 

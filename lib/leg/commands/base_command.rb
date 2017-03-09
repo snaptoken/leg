@@ -33,7 +33,7 @@ class Leg::Commands::BaseCommand
   end
 
   def steps
-    @steps ||= Dir[File.join(@config[:path], "*")].map do |f|
+    @steps ||= Dir[File.join(@config[:path], "steps/*")].map do |f|
       name = File.basename(f)
       name if File.directory?(f) && name =~ /\A\d+(\.\d+)*(-\w+)*\z/
     end.compact.sort_by { |s| s.split(".").map(&:to_i) }.reject { |s| s.to_i.zero? }
@@ -61,7 +61,7 @@ class Leg::Commands::BaseCommand
   end
 
   def step_path(step)
-    File.join(@config[:path], step)
+    File.join(@config[:path], "steps", step)
   end
 
   def select_step(step, &block)

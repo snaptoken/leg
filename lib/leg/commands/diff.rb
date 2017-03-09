@@ -11,7 +11,7 @@ class Leg::Commands::Diff < Leg::Commands::BaseCommand
     needs! :config
 
     if !File.exist?(File.join(@config[:path], "repo"))
-      puts "Error: Not in repo mode!"
+      puts "Error: repo folder doesn't exist!"
       exit!
     end
 
@@ -20,13 +20,13 @@ class Leg::Commands::Diff < Leg::Commands::BaseCommand
       File.open("../steps.diff", "w") do |f|
         step_num = 1
         patches.each_line do |line|
-          if line =~ /^(From|Date)/
+          if line =~ /^(From|Date|index)/
             # skip
-          elsif line =~ /^Subject: \[[^\]]*\] (.*)$/
+          elsif line =~ /^Subject: \[[^\]]*\](.*)$/
             f << "\n" unless step_num == 1
-            parts = $1.split('-')
-            if parts.length >= 2
-              f << "~~~ step: #{parts[1..-1].join('-')}\n"
+            step_name = $1.strip
+            if step_name =~ /^\w+(-\w+)*$/
+              f << "~~~ step: #{step_name}\n"
             else
               f << "~~~ step\n"
             end

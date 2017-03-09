@@ -16,45 +16,43 @@ class Leg::Commands::Undiff < Leg::Commands::BaseCommand
         exit!
       end
 
-      if !steps.empty?
-        puts "Error: Step folders already exist!"
+      if File.exist?("steps")
+        puts "Error: steps folder already exists!"
         exit!
       end
 
-      if File.exist?("repo")
-        puts "Error: In repo mode!"
-        exit!
-      end
+      FileUtils.mkdir("steps")
+      FileUtils.cd("steps") do
+        File.open("../steps.diff", "r") do |f|
+          step_num = 0
+          step_dir = nil
+          prev_dir = nil
+          cur_diff = nil
+          while line = f.gets
+            if line =~ /^~~~ step(: \w+(-\w+)*)?$/
+              if cur_diff
+                apply_diff(step_dir, cur_diff)
+                cur_diff = nil
+              end
 
-      File.open("steps.diff", "r") do |f|
-        step_num = 0
-        step_dir = nil
-        prev_dir = nil
-        cur_diff = nil
-        while line = f.gets
-          if line =~ /^~~~ step(: \w+(-\w+)*)?$/
-            if cur_diff
-              apply_diff(step_dir, cur_diff)
-              cur_diff = nil
+              step_num += 1
+              step_dir = step_num.to_s
+              step_dir += "-#{$1[2..-1]}" if $1
+              if step_num == 1
+                FileUtils.mkdir(step_dir)
+              else
+                FileUtils.cp_r(prev_dir, step_dir)
+              end
+              prev_dir = step_dir
+            elsif line =~ /^diff --git/
+              apply_diff(step_dir, cur_diff) if cur_diff
+              cur_diff = line
+            elsif cur_diff
+              cur_diff << line
             end
-
-            step_num += 1
-            step_dir = step_num.to_s
-            step_dir += "-#{$1[2..-1]}" if $1
-            if step_num == 1
-              FileUtils.mkdir(step_dir)
-            else
-              FileUtils.cp_r(prev_dir, step_dir)
-            end
-            prev_dir = step_dir
-          elsif line =~ /^diff --git/
-            apply_diff(step_dir, cur_diff) if cur_diff
-            cur_diff = line
-          elsif cur_diff
-            cur_diff << line
           end
+          apply_diff(step_dir, cur_diff) if cur_diff
         end
-        apply_diff(step_dir, cur_diff) if cur_diff
       end
     end
   end
