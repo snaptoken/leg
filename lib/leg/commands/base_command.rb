@@ -13,22 +13,54 @@ class Leg::Commands::BaseCommand
   end
 
   ERROR_MSG = {
-    config: "You are not in a leg working directory.",
+    config: {
+      true: "You are not in a leg working directory.",
+      false: "You are already in a leg working directory."
+    },
+    steps_folder: {
+      true: "There is no steps folder.",
+      false: "There is already a steps folder."
+    },
+    steps: {
+      true: "There are no steps in the steps folder."
+    },
+    repo: {
+      true: "There is no repo folder.",
+      false: "There is already a repo folder."
+    },
+    diff: {
+      true: "There is no steps.diff file."
+    }
   }
 
-  def needs!(what)
-    valid = false
+  def needs!(*whats)
+    options = whats.pop if whats.last.is_a? Hash
+    options ||= {}
 
-    case what
-    when :config
-      valid = true if @config
-    else
-      raise NotImplementedError
-    end
+    yes = Array(whats).flatten.map { |w| [w, true] }
+    no = Array(options[:not]).map { |w| [w, false] }
 
-    if !valid
-      puts "Error: " + ERROR_MSG[what]
-      exit!
+    (yes + no).each do |what, v|
+      valid = false
+      case what
+      when :config
+        valid = true if @config
+      when :steps_folder
+        valid = true if File.exist?(File.join(@config[:path], "steps"))
+      when :steps
+        valid = true if steps.length > 0
+      when :repo
+        valid = true if File.exist?(File.join(@config[:path], "repo"))
+      when :diff
+        valid = true if File.exist?(File.join(@config[:path], "steps.diff"))
+      else
+        raise NotImplementedError
+      end
+
+      if valid != v
+        puts "Error: " + ERROR_MSG[what][v.to_s.to_sym]
+        exit!
+      end
     end
   end
 

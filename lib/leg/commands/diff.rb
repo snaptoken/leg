@@ -8,12 +8,7 @@ class Leg::Commands::Diff < Leg::Commands::BaseCommand
   end
 
   def run
-    needs! :config
-
-    if !File.exist?(File.join(@config[:path], "repo"))
-      puts "Error: repo folder doesn't exist!"
-      exit!
-    end
+    needs! :config, :repo
 
     FileUtils.cd(File.join(@config[:path], "repo")) do
       patches = `git format-patch --stdout -p --no-signature --root master`

@@ -30,6 +30,12 @@ class Leg::CLI
   def run(args)
     args = ["help"] if args.empty?
     cmd_name = args.shift.downcase
+
+    if cmd_name =~ /\A\d+\z/
+      args.unshift(cmd_name)
+      cmd_name = "ref"
+    end
+
     if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
       cmd.new(args, @config).run
     else

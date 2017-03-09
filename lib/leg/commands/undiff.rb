@@ -4,23 +4,13 @@ class Leg::Commands::Undiff < Leg::Commands::BaseCommand
   end
 
   def self.summary
-    "Conver steps.diff to step folders"
+    "Convert steps.diff to steps folder"
   end
 
   def run
-    needs! :config
+    needs! :config, :diff, not: :steps_folder
 
     FileUtils.cd(@config[:path]) do
-      if !File.exist?("steps.diff")
-        puts "Error: steps.diff doesn't exist!"
-        exit!
-      end
-
-      if File.exist?("steps")
-        puts "Error: steps folder already exists!"
-        exit!
-      end
-
       FileUtils.mkdir("steps")
       FileUtils.cd("steps") do
         File.open("../steps.diff", "r") do |f|

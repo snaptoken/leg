@@ -4,23 +4,13 @@ class Leg::Commands::Repo < Leg::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert step folders into a version controlled repository"
+    "Convert steps folder into a version controlled repository"
   end
 
   def run
-    needs! :config
+    needs! :config, :steps_folder, :steps, not: :repo
 
     FileUtils.cd(@config[:path])
-
-    if File.exist?("repo")
-      puts "Error: repo folder already exists!"
-      exit!
-    end
-
-    if !File.exist?("steps")
-      puts "Error: no steps folder"
-      exit!
-    end
 
     FileUtils.mkdir("repo")
     repo = Rugged::Repository.init_at("repo")
