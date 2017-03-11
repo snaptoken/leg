@@ -11,7 +11,7 @@ class Leg::Commands::Diff < Leg::Commands::BaseCommand
     needs! :config, :repo
 
     FileUtils.cd(File.join(@config[:path], "repo")) do
-      patches = `git format-patch --stdout -p --no-signature --root master`
+      patches = `git format-patch --stdout -p --no-signature --histogram --root master`
       File.open("../steps.diff", "w") do |f|
         step_num = 1
         patches.each_line do |line|
