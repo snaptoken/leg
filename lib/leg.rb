@@ -9,4 +9,5 @@ end
 
 require 'leg/cli'
 require 'leg/commands'
+require 'leg/diff'
 

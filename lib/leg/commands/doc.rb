@@ -66,7 +66,6 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
     diffs = {}
     FileUtils.cd("../steps") do
       FileUtils.mkdir_p("0")
-
       last_step = "0"
       Dir["*"].sort_by(&:to_i).each do |step|
         names = [step.to_i.to_s]
@@ -74,132 +73,16 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
           names << $1
         end
 
-        diffout = []
-        section_stack = []
-        in_diff = false
-        filename = nil
-        line_idx = nil
-
-        diff = `git diff --histogram --unified=100000 --ignore-space-change --no-index #{last_step} #{step}`
-        diff.lines.each do |line|
-          if !in_diff && line =~ /^diff --git (\S+) (\S+)$/
-            filename = File.basename($2)
-            line_idx = -1
-            diffout << {type: :section, section_type: :file, summary: filename, all_content: "", content: []}
-            section_stack = [diffout.last]
-          elsif !in_diff && line.start_with?('new file')
-            section_stack.first[:new_file] = true
-          elsif line.start_with? '@@'
-            in_diff = true
-          elsif in_diff && [' ', '+', '-'].include?(line[0])
-            section_stack.first[:all_content] << line[1..-1]
-            line_idx += 1
-            type = {' ' => :nochange, '+' => :add, '-' => :remove }[line[0]]
-
-            section_stack.each { |s| s[:dirty] = true } if type != :nochange
-
-            if line[1..-1] =~ /^\/\*\*\* (.+) \*\*\*\/$/
-              section_stack = [section_stack[0]]
-              section_stack.last[:content] << {type: :section, section_type: :comment, summary: line_idx, content: []}
-              section_stack.push(section_stack.last[:content].last)
-            elsif line[1] =~ /\S/ && line.chomp[-1] == "{"
-              section_stack.pop if section_stack.length > 1 && section_stack.last[:section_type] == :braces
-              section_stack.last[:content] << {type: :section, section_type: :braces, summary: [line_idx], content: []}
-              section_stack.push(section_stack.last[:content].last)
-            end
-
-            section_stack.last[:content] << {type: type, content: line_idx, empty: line[1..-1].strip.empty? }
-
-            if line[1..-1] =~ /^}( \w+)?;?$/ && section_stack.last[:section_type] == :braces
-              s = section_stack.pop
-              s[:summary] << line_idx
-            end
-
-            section_stack.each { |s| s[:dirty] = true } if type != :nochange
-          else
-            in_diff = false
-          end
-        end
-
-        change_chain = []
-        diffout.each do |file|
-          to_render = file[:content].dup
-          until to_render.empty?
-            cur = to_render.shift
-            if cur[:type] == :section
-              if cur[:dirty]
-                to_render = cur[:content] + to_render
-              else
-                if change_chain.first && change_chain.first[:empty]
-                  change_chain.first[:type] = :nochange
-                end
-                if change_chain.last && change_chain.last[:empty]
-                  change_chain.last[:type] = :nochange
-                end
-                change_chain = []
-              end
-            else
-              if cur[:type] == :nochange
-                if change_chain.first && change_chain.first[:empty]
-                  change_chain.first[:type] = :nochange
-                end
-                if change_chain.last && change_chain.last[:empty]
-                  change_chain.last[:type] = :nochange
-                end
-                change_chain = []
-              else
-                change_chain << cur
-                if cur[:type] == :add
-                  change_chain.each { |c| c[:omit] = true if c[:type] == :remove }
-                elsif cur[:type] == :remove
-                  cur[:omit] = true if change_chain.any? { |c| c[:type] == :add }
-                end
-              end
-            end
-          end
-        end
-
-        formatter = Rouge::Formatters::HTML.new
-        formatter = HTMLLineByLine.new(formatter)
-        html = ""
-        diffout.each do |file|
-          lexer = Rouge::Lexer.guess(filename: file[:summary])
-          code_hl = formatter.format(lexer.lex(file[:all_content])).lines.each(&:chomp!)
-
-          html << "<div class=\"diff\">\n"
-          html << "<div class=\"filename\">#{file[:summary]}</div>\n"
-          html << "<pre class=\"highlight\"><code>"
-
-          to_render = file[:content].dup
-          until to_render.empty?
-            cur = to_render.shift
-            if cur[:type] == :section
-              if cur[:dirty]
-                to_render = cur[:content] + to_render
-              else
-                summary = Array(cur[:summary]).map { |n| code_hl[n] }.join(" ... ").gsub("\n", "")
-                html << "<div class=\"line folded\">#{summary}</div>"
-              end
-            elsif !cur[:omit]
-              tag = {nochange: :div, add: :ins, remove: :del}[cur[:type]]
-              tag = :div if file[:new_file]
-              html << "<#{tag} class=\"line\">#{code_hl[cur[:content]]}</#{tag}>"
-            end
-          end
-
-          html << "</code></pre>\n</div>\n"
-        end
+        diff = Leg::Diff.new(last_step, step)
 
         names.each do |name|
-          diffs[name] = html
+          diffs[name] = diff.html.values.join("\n")
         end
 
         last_step = step
       end
-
       FileUtils.rmdir("0")
     end
-
     diffs
   end
 
