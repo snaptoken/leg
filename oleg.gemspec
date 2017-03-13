@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'oleg'
-  s.version     = '0.6.0'
+  s.version     = '0.7.0'
   s.license     = 'MIT'
   s.summary     = 'tools for .leg files'
   s.author      = 'Jeremy Ruten'
@@ -10,5 +10,7 @@ Gem::Specification.new do |s|
   s.executables << 'leg'
 
   s.add_runtime_dependency 'rugged', '0.25.1.1'
+  s.add_runtime_dependency 'redcarpet', '3.4.0'
+  s.add_runtime_dependency 'rouge', '2.0.7'
 end
 

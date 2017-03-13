@@ -17,6 +17,9 @@ class Leg::Commands::BaseCommand
       true: "You are not in a leg working directory.",
       false: "You are already in a leg working directory."
     },
+    config_title: {
+      true: "You need to set a title in leg.yml."
+    },
     steps_folder: {
       true: "There is no steps folder.",
       false: "There is already a steps folder."
@@ -30,6 +33,9 @@ class Leg::Commands::BaseCommand
     },
     diff: {
       true: "There is no steps.diff file."
+    },
+    doc: {
+      true: "There is no doc folder."
     }
   }
 
@@ -45,6 +51,8 @@ class Leg::Commands::BaseCommand
       case what
       when :config
         valid = true if @config
+      when :config_title
+        valid = true if @config[:title]
       when :steps_folder
         valid = true if File.exist?(File.join(@config[:path], "steps"))
       when :steps
@@ -53,6 +61,8 @@ class Leg::Commands::BaseCommand
         valid = true if File.exist?(File.join(@config[:path], "repo"))
       when :diff
         valid = true if File.exist?(File.join(@config[:path], "steps.diff"))
+      when :doc
+        valid = true if File.exist?(File.join(@config[:path], "doc"))
       else
         raise NotImplementedError
       end
