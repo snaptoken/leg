@@ -20,6 +20,21 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
     end
   end
 
+  class HTMLLineByLine < Rouge::Formatter
+    def initialize(formatter)
+      @formatter = formatter
+    end
+
+    def stream(tokens, &b)
+      token_lines(tokens) do |line|
+        line.each do |tok, val|
+          yield @formatter.span(tok, val)
+        end
+        yield "\n"
+      end
+    end
+  end
+
   private
 
   def copy_static_files
@@ -62,39 +77,42 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
         diffout = []
         section_stack = []
         in_diff = false
-        lexer = nil
-        formatter = Rouge::Formatters::HTML.new
+        filename = nil
+        line_idx = nil
 
         diff = `git diff --histogram --unified=100000 --ignore-space-change --no-index #{last_step} #{step}`
         diff.lines.each do |line|
-          if !in_diff && line =~ /^\+\+\+ (.+)$/
-            filename = File.basename($1)
-            lexer = Rouge::Lexer.guess(filename: filename)
-            diffout << {type: :section, section_type: :file, summary: filename, content: []}
+          if !in_diff && line =~ /^diff --git (\S+) (\S+)$/
+            filename = File.basename($2)
+            line_idx = -1
+            diffout << {type: :section, section_type: :file, summary: filename, all_content: "", content: []}
             section_stack = [diffout.last]
+          elsif !in_diff && line.start_with?('new file')
+            section_stack.first[:new_file] = true
           elsif line.start_with? '@@'
             in_diff = true
           elsif in_diff && [' ', '+', '-'].include?(line[0])
-            line_hl = formatter.format(lexer.lex(line[1..-1])).gsub("\n", "")
+            section_stack.first[:all_content] << line[1..-1]
+            line_idx += 1
             type = {' ' => :nochange, '+' => :add, '-' => :remove }[line[0]]
 
             section_stack.each { |s| s[:dirty] = true } if type != :nochange
 
             if line[1..-1] =~ /^\/\*\*\* (.+) \*\*\*\/$/
               section_stack = [section_stack[0]]
-              section_stack.last[:content] << {type: :section, section_type: :comment, summary: line[1..-1].chomp, content: []}
+              section_stack.last[:content] << {type: :section, section_type: :comment, summary: line_idx, content: []}
               section_stack.push(section_stack.last[:content].last)
             elsif line[1] =~ /\S/ && line.chomp[-1] == "{"
               section_stack.pop if section_stack.length > 1 && section_stack.last[:section_type] == :braces
-              section_stack.last[:content] << {type: :section, section_type: :braces, summary: line[1..-1].chomp + " ... ", content: []}
+              section_stack.last[:content] << {type: :section, section_type: :braces, summary: [line_idx], content: []}
               section_stack.push(section_stack.last[:content].last)
             end
 
-            section_stack.last[:content] << {type: type, content: line_hl}
+            section_stack.last[:content] << {type: type, content: line_idx, empty: line[1..-1].strip.empty? }
 
-            if line[1..-1] =~ /^(}( \w+)?;?)$/ && section_stack.last[:section_type] == :braces
+            if line[1..-1] =~ /^}( \w+)?;?$/ && section_stack.last[:section_type] == :braces
               s = section_stack.pop
-              s[:summary] << $1
+              s[:summary] << line_idx
             end
 
             section_stack.each { |s| s[:dirty] = true } if type != :nochange
@@ -112,20 +130,20 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
               if cur[:dirty]
                 to_render = cur[:content] + to_render
               else
-                if change_chain.first && change_chain.first[:content].empty?
+                if change_chain.first && change_chain.first[:empty]
                   change_chain.first[:type] = :nochange
                 end
-                if change_chain.last && change_chain.last[:content].empty?
+                if change_chain.last && change_chain.last[:empty]
                   change_chain.last[:type] = :nochange
                 end
                 change_chain = []
               end
             else
               if cur[:type] == :nochange
-                if change_chain.first && change_chain.first[:content].empty?
+                if change_chain.first && change_chain.first[:empty]
                   change_chain.first[:type] = :nochange
                 end
-                if change_chain.last && change_chain.last[:content].empty?
+                if change_chain.last && change_chain.last[:empty]
                   change_chain.last[:type] = :nochange
                 end
                 change_chain = []
@@ -141,8 +159,13 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
           end
         end
 
+        formatter = Rouge::Formatters::HTML.new
+        formatter = HTMLLineByLine.new(formatter)
         html = ""
         diffout.each do |file|
+          lexer = Rouge::Lexer.guess(filename: file[:summary])
+          code_hl = formatter.format(lexer.lex(file[:all_content])).lines.each(&:chomp!)
+
           html << "<div class=\"diff\">\n"
           html << "<div class=\"filename\">#{file[:summary]}</div>\n"
           html << "<pre class=\"highlight\"><code>"
@@ -154,12 +177,13 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
               if cur[:dirty]
                 to_render = cur[:content] + to_render
               else
-                summary = formatter.format(lexer.lex(cur[:summary])).gsub("\n", "")
+                summary = Array(cur[:summary]).map { |n| code_hl[n] }.join(" ... ").gsub("\n", "")
                 html << "<div class=\"line folded\">#{summary}</div>"
               end
             elsif !cur[:omit]
               tag = {nochange: :div, add: :ins, remove: :del}[cur[:type]]
-              html << "<#{tag} class=\"line\">#{cur[:content]}</#{tag}>"
+              tag = :div if file[:new_file]
+              html << "<#{tag} class=\"line\">#{code_hl[cur[:content]]}</#{tag}>"
             end
           end
 
