@@ -1,4 +1,4 @@
-class Leg::CLI
+class Snaptoken::CLI
   CONFIG_FILE = "leg.yml"
 
   def initialize
@@ -36,7 +36,7 @@ class Leg::CLI
       cmd_name = "ref"
     end
 
-    if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
+    if cmd = Snaptoken::Commands::LIST.find { |cmd| cmd.name == cmd_name }
       cmd.new(args, @config).run
     else
       puts "There is no '#{cmd_name}' command. Run `leg help` for help."

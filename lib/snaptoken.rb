@@ -5,10 +5,10 @@ require 'rugged'
 require 'redcarpet'
 require 'rouge'
 
-module Leg
+module Snaptoken
 end
 
-require 'leg/cli'
-require 'leg/commands'
-require 'leg/diff'
+require 'snaptoken/cli'
+require 'snaptoken/commands'
+require 'snaptoken/diff'
 

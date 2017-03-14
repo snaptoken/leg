@@ -1,4 +1,4 @@
-class Leg::Diff
+class Snaptoken::Diff
   GIT_DIFF_OPTIONS = "--histogram --unified=100000 --ignore-space-change --no-index"
 
   attr_reader :files, :html

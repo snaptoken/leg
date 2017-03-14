@@ -1,4 +1,4 @@
-class Leg::Commands::Help < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Help < Snaptoken::Commands::BaseCommand
   def self.name
     "help"
   end
@@ -11,7 +11,7 @@ class Leg::Commands::Help < Leg::Commands::BaseCommand
     puts "Usage: leg <command> [args...]"
     puts
     puts "Commands:"
-    Leg::Commands::LIST.each do |cmd|
+    Snaptoken::Commands::LIST.each do |cmd|
       puts "  #{cmd.name}"
       puts "      #{cmd.summary}"
     end

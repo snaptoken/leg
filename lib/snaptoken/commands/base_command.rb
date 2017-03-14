@@ -1,4 +1,4 @@
-class Leg::Commands::BaseCommand
+class Snaptoken::Commands::BaseCommand
   def initialize(args, config)
     @args = args
     @config = config
@@ -9,7 +9,7 @@ class Leg::Commands::BaseCommand
   def run; raise NotImplementedError; end
 
   def self.inherited(subclass)
-    Leg::Commands::LIST << subclass
+    Snaptoken::Commands::LIST << subclass
   end
 
   ERROR_MSG = {

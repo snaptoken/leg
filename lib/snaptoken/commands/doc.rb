@@ -1,4 +1,4 @@
-class Leg::Commands::Doc < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def self.name
     "doc"
   end
@@ -73,7 +73,7 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
           names << $1
         end
 
-        diff = Leg::Diff.new(last_step, step)
+        diff = Snaptoken::Diff.new(last_step, step)
 
         names.each do |name|
           diffs[name] = diff.html.values.join("\n")

@@ -1,4 +1,4 @@
-class Leg::Commands::Fancy < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Fancy < Snaptoken::Commands::BaseCommand
   def self.name
     "fancy"
   end

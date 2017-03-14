@@ -1,4 +1,4 @@
-class Leg::Commands::Diff < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   def self.name
     "diff"
   end

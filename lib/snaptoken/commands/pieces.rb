@@ -1,4 +1,4 @@
-class Leg::Commands::Pieces < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Pieces < Snaptoken::Commands::BaseCommand
   def self.name
     "pieces"
   end

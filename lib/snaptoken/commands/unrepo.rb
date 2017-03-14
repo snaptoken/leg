@@ -1,19 +1,18 @@
-class Leg::Commands::Ref < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
   def self.name
-    "ref"
+    "unrepo"
   end
 
   def self.summary
-    "Convert a step number or name to a git commit reference"
+    "Convert repository into steps folder"
   end
 
   def run
-    needs! :config, :repo
-
-    ref = @args.first
-    is_num = (ref =~ /\A\d+\z/)
+    needs! :config, :repo, not: :steps_folder
 
     FileUtils.cd(@config[:path]) do
+      FileUtils.mkdir("steps")
+
       repo = Rugged::Repository.new("repo")
 
       walker = Rugged::Walker.new(repo)
@@ -23,14 +22,15 @@ class Leg::Commands::Ref < Leg::Commands::BaseCommand
         step_num = (idx + 1).to_s
         step_name = commit.message.lines.first.strip
 
-        if (is_num && ref == step_num) || (!is_num && ref == step_name)
-          puts commit.oid
-          exit
+        if step_name.empty?
+          step = step_num
+        else
+          step = "#{step_num}-#{step_name}"
         end
-      end
 
-      puts "Error: reference not found"
-      exit!
+        repo.checkout(commit.oid, strategy: :force,
+                                  target_directory: step_path(step))
+      end
     end
   end
 end

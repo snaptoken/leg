@@ -1,4 +1,4 @@
-class Leg::Commands::Repo < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
   def self.name
     "repo"
   end

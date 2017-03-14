@@ -1,4 +1,4 @@
-class Leg::Commands::Deploy < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Deploy < Snaptoken::Commands::BaseCommand
   def self.name
     "deploy"
   end

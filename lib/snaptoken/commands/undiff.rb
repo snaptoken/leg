@@ -1,4 +1,4 @@
-class Leg::Commands::Undiff < Leg::Commands::BaseCommand
+class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
   def self.name
     "undiff"
   end
