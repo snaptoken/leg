@@ -4,6 +4,7 @@ end
 
 require 'leg/commands/base_command'
 
+require 'leg/commands/deploy'
 require 'leg/commands/diff'
 require 'leg/commands/doc'
 require 'leg/commands/help'

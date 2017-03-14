@@ -36,6 +36,12 @@ class Leg::Commands::BaseCommand
     },
     doc: {
       true: "There is no doc folder."
+    },
+    doc_out: {
+      true: "There are no doc output files."
+    },
+    ftp: {
+      true: "There is no ftp.yml file."
     }
   }
 
@@ -63,6 +69,10 @@ class Leg::Commands::BaseCommand
         valid = true if File.exist?(File.join(@config[:path], "steps.diff"))
       when :doc
         valid = true if File.exist?(File.join(@config[:path], "doc"))
+      when :doc_out
+        valid = true if File.exist?(File.join(@config[:path], "doc/html_out"))
+      when :ftp
+        valid = true if File.exist?(File.join(@config[:path], "ftp.yml"))
       else
         raise NotImplementedError
       end
