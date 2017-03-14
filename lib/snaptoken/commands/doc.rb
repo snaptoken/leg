@@ -8,7 +8,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def run
-    needs! :config, :config_title, :steps_folder, :steps, :doc
+    needs! :config, :config_name, :config_title, :steps_folder, :steps, :doc
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
       FileUtils.rm_rf("html_out")
@@ -73,7 +73,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
           names << $1
         end
 
-        diff = Snaptoken::Diff.new(last_step, step)
+        diff = Snaptoken::Diff.new(@config, last_step, step)
 
         names.each do |name|
           diffs[name] = diff.html.values.join("\n")

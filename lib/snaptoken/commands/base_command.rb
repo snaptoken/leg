@@ -17,6 +17,9 @@ class Snaptoken::Commands::BaseCommand
       true: "You are not in a leg working directory.",
       false: "You are already in a leg working directory."
     },
+    config_name: {
+      true: "You need to set a name in leg.yml."
+    },
     config_title: {
       true: "You need to set a title in leg.yml."
     },
@@ -57,6 +60,8 @@ class Snaptoken::Commands::BaseCommand
       case what
       when :config
         valid = true if @config
+      when :config_name
+        valid = true if @config[:name]
       when :config_title
         valid = true if @config[:title]
       when :steps_folder

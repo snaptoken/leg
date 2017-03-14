@@ -3,14 +3,18 @@ class Snaptoken::Diff
 
   attr_reader :files, :html
 
-  def initialize(step_a, step_b)
+  def initialize(config, step_a, step_b)
     git_diff = `git diff #{GIT_DIFF_OPTIONS} #{step_a} #{step_b}`
     parse_git_diff(git_diff)
     @files.values.each(&:omit_adjacent_removals!)
 
+    step = step_b.split('-')
+    step.shift
+    step = step.join('-')
+
     @html = {}
     @files.each do |filename, file|
-      @html[filename] = file.to_html
+      @html[filename] = file.to_html(config[:name], step)
     end
   end
 
@@ -96,7 +100,7 @@ class Snaptoken::Diff
       end
     end
 
-    def to_html
+    def to_html(project, step)
       formatter = Rouge::Formatters::HTML.new
       formatter = HTMLLineByLine.new(formatter)
 
@@ -105,7 +109,7 @@ class Snaptoken::Diff
 
       html = ""
       html << "<div class=\"diff\">\n"
-      html << "<div class=\"filename\">#{@filename}</div>\n"
+      html << "<div class=\"filename\"><a href=\"https://github.com/snaptoken/#{project}/blob/#{step}/#{@filename}\">#{@filename}</a></div>\n"
       html << "<pre class=\"highlight\"><code>"
 
       to_render = @contents.dup

@@ -34,7 +34,11 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
       options[:parents] = repo.empty? ? [] : [repo.head.target]
       options[:update_ref] = 'HEAD'
 
-      Rugged::Commit.create(repo, options)
+      commit_oid = Rugged::Commit.create(repo, options)
+
+      if step_name(step)
+        repo.references.create("refs/tags/#{step_name(step)}", commit_oid)
+      end
     end
 
     repo.checkout_head(strategy: :force)
