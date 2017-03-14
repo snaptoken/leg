@@ -41,7 +41,7 @@ class Leg::Commands::Doc < Leg::Commands::BaseCommand
     Dir["html_in/*"].each do |f|
       name = File.basename(f)
       unless %w(template.html style.css).include? name
-        FileUtils.cp(f, "html_out/#{name}")
+        FileUtils.cp_r(f, "html_out/#{name}")
       end
     end
   end
