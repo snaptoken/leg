@@ -101,6 +101,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       index << "<li><a href='#{html_file}'>#{title}</a></li>\n"
 
       content = markdown.render(md)
+      content = Redcarpet::Render::SmartyPants.render(content)
       content.gsub!(/<p>{{([\w-]+)}}<\/p>/) { diffs[$1] }
 
       html = html_template.dup

@@ -22,7 +22,7 @@ class Snaptoken::Commands::Deploy < Snaptoken::Commands::BaseCommand
             if File.directory?(f)
               ftp.mkdir(f) rescue Net::FTPPermError
             elsif File.file?(f)
-              ftp.putbinaryfile(f)
+              ftp.putbinaryfile(f, f)
             end
           end
         end
