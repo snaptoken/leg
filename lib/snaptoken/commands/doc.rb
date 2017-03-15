@@ -40,7 +40,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def copy_static_files
     Dir["html_in/*"].each do |f|
       name = File.basename(f)
-      unless %w(template.html style.css).include? name
+      unless %w(template.html template_index.html style.css).include? name
         FileUtils.cp_r(f, "html_out/#{name}")
       end
     end
@@ -91,24 +91,35 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
     index = ""
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML)
-    Dir["*.md"].sort.each do |md_file|
-      html_file = md_file.sub(/\.md$/, '.html')
-
-      md = File.read(md_file)
+    pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
+    pages.each.with_index do |page, idx|
+      md = File.read("#{page}.md")
       md =~ /^# (.+)$/
       title = $1
 
-      index << "<li><a href='#{html_file}'>#{title}</a></li>\n"
+      index << "<li><a href='#{page}.html'>#{title}</a></li>\n"
+
+      prev_link = "<a href='#'></a>"
+      if idx > 0
+        prev_link = "<a href='#{pages[idx-1]}.html'>&larr; prev</a>"
+      end
+
+      next_link = "<a href='#'></a>"
+      if idx < pages.length - 1
+        next_link = "<a href='#{pages[idx+1]}.html'>next &rarr;</a>"
+      end
 
       content = markdown.render(md)
       content = Redcarpet::Render::SmartyPants.render(content)
       content.gsub!(/<p>{{([\w-]+)}}<\/p>/) { diffs[$1] }
 
       html = html_template.dup
-      html.gsub!("{{title}}") { "#{@config[:title]} | #{title}" }
+      html.gsub!("{{title}}") { "#{idx+1}. #{title} | #{@config[:title]}" }
+      html.gsub!("{{prev_link}}") { prev_link }
+      html.gsub!("{{next_link}}") { next_link }
       html.gsub!("{{content}}") { content }
 
-      File.write(File.join("html_out", html_file), html)
+      File.write(File.join("html_out", "#{page}.html"), html)
     end
 
     content = <<~HTML
@@ -119,9 +130,16 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     </ol>
     HTML
 
-    html = html_template.dup
-    html.gsub!("{{title}}", @config[:title])
-    html.gsub!("{{content}}", content)
+    if File.exist?("html_in/template_index.html")
+      html = File.read("html_in/template_index.html")
+    else
+      html = html_template.dup
+    end
+
+    html.gsub!("{{title}}") { "Table of contents | #{@config[:title]}" }
+    html.gsub!("{{prev_link}}") { "<a href='#'></a>" }
+    html.gsub!("{{next_link}}") { "<a href='#{pages.first}.html'>next &rarr;</a>" }
+    html.gsub!("{{content}}") { content }
 
     File.write("html_out/index.html", html)
   end

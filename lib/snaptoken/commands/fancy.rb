@@ -14,13 +14,5 @@ class Snaptoken::Commands::Fancy < Snaptoken::Commands::BaseCommand
       exec("cat steps.diff | colordiff | diff-so-fancy | less --tabs=4 -RFX")
     end
   end
-
-  private
-
-  def apply_diff(dir, diff)
-    stdin = IO.popen("git --git-dir= apply --directory=#{dir} -", "w")
-    stdin.write diff
-    stdin.close
-  end
 end
 
