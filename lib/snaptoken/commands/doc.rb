@@ -68,6 +68,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       FileUtils.mkdir_p("0")
       last_step = "0"
       Dir["*"].sort_by(&:to_i).each do |step|
+        print "\r\e[K#{step}"
         names = [step.to_i.to_s]
         if step =~ /\d+\-([\w-]+)$/
           names << $1
@@ -81,6 +82,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
         last_step = step
       end
+      puts
       FileUtils.rmdir("0")
     end
     diffs
