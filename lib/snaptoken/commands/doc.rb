@@ -11,8 +11,10 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     needs! :config, :config_name, :config_title, :steps_folder, :steps, :doc
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
-      FileUtils.rm_rf("html_out")
-      FileUtils.mkdir("html_out")
+      unless @args.include? "--no-diffs"
+        FileUtils.rm_rf("html_out")
+        FileUtils.mkdir("html_out")
+      end
 
       copy_static_files
       write_css
@@ -63,6 +65,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def prerender_diffs
+    return if @args.include? "--no-diffs"
     diffs = {}
     FileUtils.cd("../steps") do
       FileUtils.mkdir_p("0")
@@ -94,12 +97,15 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     index = ""
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML)
     pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
+    pages.delete "00.index"
     pages.each.with_index do |page, idx|
       md = File.read("#{page}.md")
       md =~ /^# (.+)$/
       title = $1
 
       index << "<li><a href='#{page}.html'>#{title}</a></li>\n"
+
+      next if @args.include? "--no-diffs"
 
       prev_link = "<a href='#'></a>"
       if idx > 0
@@ -124,13 +130,9 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       File.write(File.join("html_out", "#{page}.html"), html)
     end
 
-    content = <<~HTML
-    <h1>#{@config[:title]}</h1>
-    <h2>Table of Contents</h2>
-    <ol>
-      #{index}
-    </ol>
-    HTML
+    content = markdown.render(File.read("00.index.md"))
+    content = Redcarpet::Render::SmartyPants.render(content)
+    content.gsub!(/<p>{{toc}}<\/p>/) { "<ol>#{index}</ol>" }
 
     if File.exist?("html_in/template_index.html")
       html = File.read("html_in/template_index.html")
