@@ -11,7 +11,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     needs! :config, :config_name, :config_title, :steps_folder, :steps, :doc
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
-      unless @args.include? "--no-diffs"
+      unless @args.include? "-c"
         FileUtils.rm_rf("html_out")
         FileUtils.mkdir("html_out")
       end
@@ -65,7 +65,10 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def prerender_diffs
-    return if @args.include? "--no-diffs"
+    if @args.include? "-c"
+      return Marshal.load(File.read("../.cached-diffs"))
+    end
+
     diffs = {}
     FileUtils.cd("../steps") do
       FileUtils.mkdir_p("0")
@@ -88,6 +91,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       puts
       FileUtils.rmdir("0")
     end
+    File.write("../.cached-diffs", Marshal.dump(diffs))
     diffs
   end
 
@@ -104,8 +108,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       title = $1
 
       index << "<li><a href='#{page}.html'>#{title}</a></li>\n"
-
-      next if @args.include? "--no-diffs"
 
       prev_link = "<a href='#'></a>"
       if idx > 0
