@@ -19,14 +19,7 @@ class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
       walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
       walker.push(repo.branches.find { |b| b.name == "master" }.target)
       walker.each.with_index do |commit, idx|
-        step_num = (idx + 1).to_s
-        step_name = commit.message.lines.first.strip
-
-        if step_name.empty?
-          step = step_num
-        else
-          step = "#{step_num}-#{step_name}"
-        end
+        step = Snaptoken::Step.from_commit_msg(idx + 1, commit.message.lines.first.strip)
 
         repo.checkout(commit.oid, strategy: :force,
                                   target_directory: step_path(step))

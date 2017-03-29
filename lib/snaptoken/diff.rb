@@ -1,20 +1,17 @@
 class Snaptoken::Diff
+  # -r for recursive?
   GIT_DIFF_OPTIONS = "--histogram --unified=100000 --ignore-space-change --no-index"
 
   attr_reader :files, :html
 
   def initialize(config, step_a, step_b)
-    git_diff = `git diff #{GIT_DIFF_OPTIONS} #{step_a} #{step_b}`
+    git_diff = `git diff #{GIT_DIFF_OPTIONS} #{step_a.folder_name} #{step_b.folder_name}`
     parse_git_diff(git_diff)
     @files.values.each(&:omit_adjacent_removals!)
 
-    step = step_b.split('-')
-    step.shift
-    step = step.join('-')
-
     @html = {}
     @files.each do |filename, file|
-      @html[filename] = file.to_html(config[:name], step)
+      @html[filename] = file.to_html(config[:name], step_b)
     end
   end
 
@@ -109,7 +106,7 @@ class Snaptoken::Diff
 
       html = ""
       html << "<div class=\"diff\">\n"
-      html << "<div class=\"filename\"><a href=\"https://github.com/snaptoken/#{project}/blob/#{step}/#{@filename}\">#{@filename}</a></div>\n"
+      html << "<div class=\"filename\"><a href=\"https://github.com/snaptoken/#{project}/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
       html << "<pre class=\"highlight\"><code>"
 
       to_render = @contents.dup

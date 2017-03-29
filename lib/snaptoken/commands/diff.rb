@@ -19,12 +19,8 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
             # skip
           elsif line =~ /^Subject: \[[^\]]*\](.*)$/
             f << "\n" unless step_num == 1
-            step_name = $1.strip
-            if step_name =~ /^\w+(-\w+)*$/
-              f << "~~~ step: #{step_name}\n"
-            else
-              f << "~~~ step\n"
-            end
+            step = Snaptoken::Step.from_commit_msg(step_num, $1.strip)
+            f << "~~~ step: #{step.commit_msg}\n"
             step_num += 1
           elsif line.chomp.length > 0
             f << line

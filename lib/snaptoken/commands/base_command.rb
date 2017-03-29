@@ -91,14 +91,13 @@ class Snaptoken::Commands::BaseCommand
 
   def steps
     @steps ||= Dir[File.join(@config[:path], "steps/*")].map do |f|
-      name = File.basename(f)
-      name if File.directory?(f) && name =~ /\A\d+(\.\d+)*(-\w+)*\z/
-    end.compact.sort_by { |s| s.split(".").map(&:to_i) }.reject { |s| s.to_i.zero? }
+      Snaptoken::Step.from_folder_name(File.basename(f)) if File.directory?(f)
+    end.compact.sort_by(&:number)
   end
 
   def current_step
     if @config[:step_path]
-      File.basename(@config[:step_path])
+      Snaptoken::Step.from_folder_name(File.basename(@config[:step_path]))
     end
   end
 
@@ -110,19 +109,12 @@ class Snaptoken::Commands::BaseCommand
     current_step || latest_step
   end
 
-  def step_name(step)
-    parts = step.split('-')
-    if parts.length > 1
-      parts[1..-1].join('-')
-    end
-  end
-
   def step_path(step)
-    File.join(@config[:path], "steps", step)
+    File.join(@config[:path], "steps", step.folder_name)
   end
 
   def select_step(step, &block)
-    puts "Selecting step: #{step}"
+    puts "Selecting step: #{step.folder_name}"
     FileUtils.cd(step_path(step), &block)
   end
 end

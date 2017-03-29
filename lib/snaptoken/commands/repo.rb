@@ -30,14 +30,14 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
 
       options = {}
       options[:tree] = index.write_tree(repo)
-      options[:message] = step_name(step) || "-"
+      options[:message] = step.commit_msg
       options[:parents] = repo.empty? ? [] : [repo.head.target]
       options[:update_ref] = 'HEAD'
 
       commit_oid = Rugged::Commit.create(repo, options)
 
-      if step_name(step)
-        repo.references.create("refs/tags/#{step_name(step)}", commit_oid)
+      if step.name
+        repo.references.create("refs/tags/#{step.name}", commit_oid)
       end
     end
 

@@ -72,19 +72,13 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     diffs = {}
     FileUtils.cd("../steps") do
       FileUtils.mkdir_p("0")
-      last_step = "0"
-      Dir["*"].sort_by(&:to_i).each do |step|
-        print "\r\e[K#{step}"
-        names = [step.to_i.to_s]
-        if step =~ /\d+\-([\w-]+)$/
-          names << $1
-        end
+      last_step = Snaptoken::Step.new(0, nil, [])
+      steps.each do |step|
+        print "\r\e[K#{step.folder_name}"
 
         diff = Snaptoken::Diff.new(@config, last_step, step)
 
-        names.each do |name|
-          diffs[name] = diff.html.values.join("\n")
-        end
+        diffs[step.name] = diff.html.values.join("\n")
 
         last_step = step
       end

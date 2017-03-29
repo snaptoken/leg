@@ -15,33 +15,32 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
       FileUtils.cd("steps") do
         File.open("../steps.diff", "r") do |f|
           step_num = 0
-          step_dir = nil
-          prev_dir = nil
+          step = Snaptoken::Step.new(0, nil, [])
+          prev_step = nil
           cur_diff = nil
           while line = f.gets
-            if line =~ /^~~~ step(: \w+(-\w+)*)?$/
+            if line =~ /^~~~ step: ([\s\w-]+)$/
               if cur_diff
-                apply_diff(step_dir, cur_diff)
+                apply_diff(step, cur_diff)
                 cur_diff = nil
               end
 
-              step_num += 1
-              step_dir = step_num.to_s
-              step_dir += "-#{$1[2..-1]}" if $1
-              if step_num == 1
-                FileUtils.mkdir(step_dir)
+              prev_step = step
+              step = Snaptoken::Step.from_commit_msg(prev_step.number + 1, $1)
+
+              if step.number == 1
+                FileUtils.mkdir(step.folder_name)
               else
-                FileUtils.cp_r(prev_dir, step_dir)
+                FileUtils.cp_r(prev_step.folder_name, step.folder_name)
               end
-              prev_dir = step_dir
             elsif line =~ /^diff --git/
-              apply_diff(step_dir, cur_diff) if cur_diff
+              apply_diff(step, cur_diff) if cur_diff
               cur_diff = line
             elsif cur_diff
               cur_diff << line
             end
           end
-          apply_diff(step_dir, cur_diff) if cur_diff
+          apply_diff(step, cur_diff) if cur_diff
         end
       end
     end
@@ -49,8 +48,8 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
 
   private
 
-  def apply_diff(dir, diff)
-    stdin = IO.popen("git --git-dir= apply --directory=#{dir} -", "w")
+  def apply_diff(step, diff)
+    stdin = IO.popen("git --git-dir= apply \"--directory=#{step.folder_name}\" -", "w")
     stdin.write diff
     stdin.close
   end
