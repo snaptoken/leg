@@ -11,7 +11,7 @@ class Snaptoken::Diff
 
     @html = {}
     @files.each do |filename, file|
-      @html[filename] = file.to_html(config[:name], step_b)
+      @html[filename] = file.to_html(config, step_b)
     end
   end
 
@@ -97,7 +97,7 @@ class Snaptoken::Diff
       end
     end
 
-    def to_html(project, step)
+    def to_html(config, step)
       formatter = Rouge::Formatters::HTML.new
       formatter = HTMLLineByLine.new(formatter)
 
@@ -106,7 +106,11 @@ class Snaptoken::Diff
 
       html = ""
       html << "<div class=\"diff\">\n"
-      html << "<div class=\"filename\"><a href=\"https://github.com/snaptoken/#{project}/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
+      html << "<div class=\"diff-header\">\n"
+      html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
+      html << "  <div class=\"step-number\">Step #{step.number}</div>\n"
+      html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}/tree/#{step.name}\">#{step.name}</a></div>\n"
+      html << "</div>"
       html << "<pre class=\"highlight\"><code>"
 
       to_render = @contents.dup
@@ -125,7 +129,17 @@ class Snaptoken::Diff
           html << "<#{tag} class=\"line\">#{code_hl[cur.line]}</#{tag}>"
         end
       end
-      html << "</code></pre>\n</div>\n"
+      html << "</code></pre>\n"
+
+      unless step.data.empty?
+        html << "<div class=\"diff-footer\">\n"
+        step.data.each do |tag|
+          html << "  <div class=\"diff-tag-#{tag}\">#{config[:tags][tag.to_sym]}</div>\n"
+        end
+        html << "</div>\n"
+      end
+
+      html << "</div>\n"
 
       html
     end
