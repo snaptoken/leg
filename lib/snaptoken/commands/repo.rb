@@ -16,10 +16,28 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
     repo = Rugged::Repository.init_at("repo")
 
     steps.each do |step|
-      index = repo.index
-      index.read_tree(repo.head.target.tree) unless repo.empty?
+      commit_oid = add_commit(repo, step, step_path(step))
 
-      FileUtils.cd(step_path(step)) do
+      if step.name
+        repo.references.create("refs/tags/#{step.name}", commit_oid)
+      end
+    end
+
+    if Dir.exist? "repo-extra"
+      add_commit(repo, nil, [step_path(latest_step), "repo-extra"])
+    end
+
+    repo.checkout_head(strategy: :force)
+  end
+
+  private
+
+  def add_commit(repo, step, add_paths)
+    index = repo.index
+    index.read_tree(repo.head.target.tree) unless repo.empty?
+
+    Array(add_paths).each do |add_path|
+      FileUtils.cd(add_path) do
         Dir["**/*"].each do |path|
           unless File.directory?(path)
             oid = repo.write(File.read(path), :blob)
@@ -27,21 +45,15 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
           end
         end
       end
-
-      options = {}
-      options[:tree] = index.write_tree(repo)
-      options[:message] = step.commit_msg
-      options[:parents] = repo.empty? ? [] : [repo.head.target]
-      options[:update_ref] = 'HEAD'
-
-      commit_oid = Rugged::Commit.create(repo, options)
-
-      if step.name
-        repo.references.create("refs/tags/#{step.name}", commit_oid)
-      end
     end
 
-    repo.checkout_head(strategy: :force)
+    options = {}
+    options[:tree] = index.write_tree(repo)
+    options[:message] = step ? step.commit_msg : "-"
+    options[:parents] = repo.empty? ? [] : [repo.head.target]
+    options[:update_ref] = 'HEAD'
+
+    Rugged::Commit.create(repo, options)
   end
 end
 
