@@ -58,8 +58,13 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       theme.palette @config[:rouge_theme]
     end
 
+    theme_css = theme.render(scope: ".highlight")
+    if @config[:bold_weight]
+      theme_css.gsub!("font-weight: bold;", "font-weight: #{@config[:bold_weight]}")
+    end
+
     css = File.read("html_in/style.css")
-    css << theme.render(scope: ".highlight")
+    css << theme_css
 
     File.write("html_out/style.css", css)
   end
