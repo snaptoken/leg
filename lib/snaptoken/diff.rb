@@ -107,9 +107,9 @@ class Snaptoken::Diff
       html = ""
       html << "<div class=\"diff\">\n"
       html << "<div class=\"diff-header\">\n"
-      html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
+      html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
       html << "  <div class=\"step-number\">Step #{step.number}</div>\n"
-      html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}/tree/#{step.name}\">#{step.name}</a></div>\n"
+      html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/tree/#{step.name}\">#{step.name}</a></div>\n"
       html << "</div>"
       html << "<pre class=\"highlight\"><code>"
 

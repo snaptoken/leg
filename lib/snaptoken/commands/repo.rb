@@ -55,6 +55,7 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
         email: @config[:repo_author][:email],
         time: Time.now
       }
+      options[:committer] = options[:author]
     end
     options[:message] = step ? step.commit_msg : "-"
     options[:parents] = repo.empty? ? [] : [repo.head.target]
