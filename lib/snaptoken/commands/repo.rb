@@ -49,6 +49,13 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
 
     options = {}
     options[:tree] = index.write_tree(repo)
+    if @config[:repo_author]
+      options[:author] = {
+        name: @config[:repo_author][:name],
+        email: @config[:repo_author][:email],
+        time: Time.now
+      }
+    end
     options[:message] = step ? step.commit_msg : "-"
     options[:parents] = repo.empty? ? [] : [repo.head.target]
     options[:update_ref] = 'HEAD'
