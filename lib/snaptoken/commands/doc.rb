@@ -22,21 +22,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     end
   end
 
-  class HTMLLineByLine < Rouge::Formatter
-    def initialize(formatter)
-      @formatter = formatter
-    end
-
-    def stream(tokens, &b)
-      token_lines(tokens) do |line|
-        line.each do |tok, val|
-          yield @formatter.span(tok, val)
-        end
-        yield "\n"
-      end
-    end
-  end
-
   private
 
   def copy_static_files
@@ -109,7 +94,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     end
 
     index = ""
-    markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML)
+    markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML.new(with_toc_data: true))
     pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
     pages.delete "00.index"
     pages.each.with_index do |page, idx|
