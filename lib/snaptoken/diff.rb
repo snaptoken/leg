@@ -170,11 +170,12 @@ class Snaptoken::Diff
     @files = {}
 
     git_diff.lines.each do |line|
-      if !in_diff && line =~ /^diff --git (\S+) (\S+)$/
+      if line =~ /^diff --git (\S+) (\S+)$/
         diff_file = DiffFile.new(File.basename($2))
         @files[diff_file.filename] = diff_file
         section_stack = [diff_file]
         line_idx = -1
+        in_diff = false
       elsif !in_diff && line.start_with?('new file')
         diff_file.new_file!
       elsif line.start_with? '@@'
