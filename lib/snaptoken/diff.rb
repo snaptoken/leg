@@ -171,7 +171,7 @@ class Snaptoken::Diff
 
     git_diff.lines.each do |line|
       if line =~ /^diff --git (\S+) (\S+)$/
-        diff_file = DiffFile.new(File.basename($2))
+        diff_file = DiffFile.new($2.split("/")[2..-1].join("/"))
         @files[diff_file.filename] = diff_file
         section_stack = [diff_file]
         line_idx = -1
