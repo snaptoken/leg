@@ -116,6 +116,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
       content = markdown.render(md)
       content = Redcarpet::Render::SmartyPants.render(content)
+      content.gsub!(/<\/code>&lsquo;/) { "</code>&rsquo;" }
       content.gsub!(/^\s*<h([23456]) id="([^"]+)">(.+)<\/h\d>$/) { "<h#{$1} id=\"#{$2}\"><a href=\"##{$2}\">#{$3}</a></h#{$1}>" }
       content.gsub!(/<p>{{([\w-]+)}}<\/p>/) { diffs[$1] }
 
