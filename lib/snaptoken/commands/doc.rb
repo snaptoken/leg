@@ -11,10 +11,8 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     needs! :config, :config_name, :config_title, :steps_folder, :steps, :doc
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
-      unless @args.include? "-c"
-        FileUtils.rm_rf("html_out")
-        FileUtils.mkdir("html_out")
-      end
+      FileUtils.rm_rf("html_out")
+      FileUtils.mkdir("html_out")
 
       copy_static_files
       write_css
