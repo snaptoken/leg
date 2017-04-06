@@ -12,11 +12,14 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
       FileUtils.rm_rf("html_out")
+      FileUtils.rm_rf("html_offline")
       FileUtils.mkdir("html_out")
+      FileUtils.mkdir("html_offline")
 
       copy_static_files
       write_css
       write_html_files(prerender_diffs)
+      create_archive if @args.include? "-z"
     end
   end
 
@@ -25,8 +28,9 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def copy_static_files
     Dir["html_in/*"].each do |f|
       name = File.basename(f)
-      unless %w(template.html template_index.html style.css).include? name
-        FileUtils.cp_r(f, "html_out/#{name}")
+      unless %w(template.html template_index.html style.css fonts.css).include? name
+        FileUtils.cp_r(f, "html_out/#{name}") unless name == "fonts"
+        FileUtils.cp_r(f, "html_offline/#{name}")
       end
     end
   end
@@ -49,7 +53,10 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     css = File.read("html_in/style.css")
     css << theme_css
 
+    offline_css = css.sub(/^@import .+$/, File.read("html_in/fonts.css"))
+
     File.write("html_out/style.css", css)
+    File.write("html_offline/style.css", offline_css)
   end
 
   def prerender_diffs
@@ -115,6 +122,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       html.gsub!("{{content}}") { content }
 
       File.write(File.join("html_out", "#{page}.html"), html)
+      File.write(File.join("html_offline", "#{page}.html"), html)
     end
 
     content = markdown.render(File.read("00.index.md"))
@@ -134,6 +142,17 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     html.gsub!("{{content}}") { content }
 
     File.write("html_out/index.html", html)
+    File.write("html_offline/index.html", html)
+  end
+
+  def create_archive
+    name = "kilo-tutorial-#{@config[:version]}"
+
+    FileUtils.mv("html_offline", name)
+
+    `zip -r #{name}.zip #{name}`
+
+    FileUtils.mv(name, "html_offline")
   end
 end
 
