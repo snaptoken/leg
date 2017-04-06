@@ -80,17 +80,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def write_html_files(diffs)
     html_template = File.read("html_in/template.html")
 
-    commit_hash = nil
-    FileUtils.cd(@config[:path]) do
-      commit_hash = `git rev-parse --short HEAD`.chomp
-    end
-
-    if @config[:version]
-      version = "#{@config[:version]}-#{commit_hash}"
-    else
-      version = commit_hash
-    end
-
     index = ""
     markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML.new(with_toc_data: true))
     pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
@@ -122,8 +111,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       html.gsub!("{{title}}") { "#{idx+1}. #{title} | #{@config[:title]}" }
       html.gsub!("{{prev_link}}") { prev_link }
       html.gsub!("{{next_link}}") { next_link }
-      html.gsub!("{{version}}") { version }
-      html.gsub!("{{commit}}") { commit_hash }
+      html.gsub!("{{version}}") { @config[:version] }
       html.gsub!("{{content}}") { content }
 
       File.write(File.join("html_out", "#{page}.html"), html)
@@ -142,8 +130,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     html.gsub!("{{title}}") { "Table of contents | #{@config[:title]}" }
     html.gsub!("{{prev_link}}") { "<a href='#'></a>" }
     html.gsub!("{{next_link}}") { "<a href='#{pages.first}.html'>next &rarr;</a>" }
-    html.gsub!("{{version}}") { version }
-    html.gsub!("{{commit}}") { commit_hash }
+    html.gsub!("{{version}}") { @config[:version] }
     html.gsub!("{{content}}") { content }
 
     File.write("html_out/index.html", html)
