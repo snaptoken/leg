@@ -101,7 +101,7 @@ class Snaptoken::Diff
       formatter = Rouge::Formatters::HTML.new
       formatter = HTMLLineByLine.new(formatter)
 
-      lexer = Rouge::Lexer.guess(filename: @filename)
+      lexer = Rouge::Lexer.guess(filename: @filename, source: @file_contents)
       code_hl = formatter.format(lexer.lex(@file_contents)).lines.each(&:chomp!)
 
       html = ""

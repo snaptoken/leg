@@ -135,7 +135,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       html = html_template.dup
     end
 
-    html.gsub!("{{title}}") { "Table of contents | #{@config[:title]}" }
+    html.gsub!("{{title}}") { @config[:title] }
     html.gsub!("{{prev_link}}") { "<a href='#'></a>" }
     html.gsub!("{{next_link}}") { "<a href='#{pages.first}.html'>next &rarr;</a>" }
     html.gsub!("{{version}}") { @config[:version] }
