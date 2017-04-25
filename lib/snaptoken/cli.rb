@@ -9,10 +9,11 @@ class Snaptoken::CLI
     while FileUtils.pwd != last_dir
       if File.exist?(CONFIG_FILE)
         @config = YAML.load(File.read(CONFIG_FILE))
-        unless @config.is_a? Hash
+        if @config == false
           puts "Error: Invalid config file."
           exit!
         end
+        @config = {} unless @config.is_a?(Hash)
         @config[:path] = FileUtils.pwd
         @config[:step_path] = last_dir2
         @config[:orig_path] = initial_dir

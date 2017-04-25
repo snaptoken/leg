@@ -8,7 +8,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def run
-    needs! :config, :config_name, :config_title, :steps_folder, :steps, :doc
+    needs! :config, :steps_folder, :steps, :doc
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
       FileUtils.rm_rf("html_out")
@@ -146,7 +146,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def create_archive
-    name = "kilo-tutorial-#{@config[:version]}"
+    name = "#{@config[:name]}-tutorial-#{@config[:version]}"
 
     FileUtils.mv("html_offline", name)
 
