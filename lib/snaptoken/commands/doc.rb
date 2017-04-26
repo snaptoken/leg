@@ -1,3 +1,5 @@
+require "rouge/plugins/redcarpet"
+
 class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def self.name
     "doc"
@@ -21,6 +23,10 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       write_html_files(prerender_diffs)
       create_archive if @args.include? "-z"
     end
+  end
+
+  class HTMLRouge < Redcarpet::Render::HTML
+    include Rouge::Plugins::Redcarpet
   end
 
   private
@@ -88,7 +94,8 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     html_template = File.read("html_in/template.html")
 
     index = ""
-    markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML.new(with_toc_data: true))
+    html_renderer = HTMLRouge.new(with_toc_data: true)
+    markdown = Redcarpet::Markdown.new(html_renderer, fenced_code_blocks: true)
     pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
     pages.delete "00.index"
     pages.each.with_index do |page, idx|
