@@ -15,6 +15,10 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
     o.on("-f", "--force", "Overwrite steps/ folder") do |f|
       @opts[:force] = f
     end
+
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
@@ -44,6 +48,8 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
               prev_step = step
               step = Snaptoken::Step.from_commit_msg(prev_step.number + 1, $1)
 
+              print "\r\e[K[steps.diff -> steps/] #{step.folder_name}" unless @opts[:quiet]
+
               if step.number == 1
                 FileUtils.mkdir(step.folder_name)
               else
@@ -57,6 +63,7 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
             end
           end
           apply_diff(step, cur_diff) if cur_diff
+          print "\n" unless @opts[:quiet]
         end
       end
     end

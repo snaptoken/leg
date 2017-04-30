@@ -15,6 +15,10 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
     o.on("-f", "--force", "Overwrite repo/ folder") do |f|
       @opts[:force] = f
     end
+
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
@@ -32,12 +36,14 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
     repo = Rugged::Repository.init_at("repo")
 
     steps.each do |step|
+      print "\r\e[K[steps/ -> repo/] #{step.folder_name}" unless @opts[:quiet]
       commit_oid = add_commit(repo, step, step_path(step))
 
       if step.name
         repo.references.create("refs/tags/#{step.name}", commit_oid)
       end
     end
+    print "\n" unless @opts[:quiet]
 
     if Dir.exist? "repo-extra"
       add_commit(repo, nil, [step_path(latest_step), "repo-extra"])

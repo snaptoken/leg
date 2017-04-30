@@ -15,6 +15,10 @@ class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
     o.on("-f", "--force", "Overwrite steps/ folder") do |f|
       @opts[:force] = f
     end
+
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
@@ -38,10 +42,12 @@ class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
         break if commit.message.lines.first.strip == "-"
 
         step = Snaptoken::Step.from_commit_msg(idx + 1, commit.message.lines.first.strip)
+        print "\r\e[K[repo/ -> steps/] #{step.folder_name}" unless @opts[:quiet]
 
         repo.checkout(commit.oid, strategy: :force,
                                   target_directory: step_path(step))
       end
+      print "\n" unless @opts[:quiet]
     end
   end
 end

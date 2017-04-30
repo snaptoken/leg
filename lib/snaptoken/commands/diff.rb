@@ -4,14 +4,17 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repo into a single file containing diffs for each step"
+    "Convert repo/ into a single file containing diffs for each step"
   end
 
   def self.usage
-    ""
+    "[options]"
   end
 
   def setopts!(o)
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
@@ -28,12 +31,14 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
             break if $1.strip == "-"
             f << "\n" unless step_num == 1
             step = Snaptoken::Step.from_commit_msg(step_num, $1.strip)
+            print "\r\e[K[repo/ -> steps.diff] #{step.folder_name}" unless @opts[:quiet]
             f << "~~~ step: #{step.commit_msg}\n"
             step_num += 1
           elsif line.chomp.length > 0
             f << line
           end
         end
+        print "\n" unless @opts[:quiet]
       end
     end
   end

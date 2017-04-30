@@ -21,12 +21,20 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     o.on("-z", "--zip", "Also create a .zip archive in doc/") do |z|
       @opts[:zip] = z
     end
+
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
-    needs! :config, :steps_folder, :steps, :doc
+    needs! :config, :doc
     if @opts[:cached]
       needs! :cached_diffs
+    else
+      sync_args = @opts[:quiet] ? ["--quiet"] : []
+      Snaptoken::Commands::Sync.new(sync_args, @config).run
+      @steps = nil # XXX just in case @steps were already cached
     end
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
@@ -92,7 +100,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       FileUtils.mkdir_p("0")
       last_step = Snaptoken::Step.new(0, nil, [])
       steps.each do |step|
-        print "\r\e[K#{step.folder_name}"
+        print "\r\e[K[steps/ -> .cached-diffs] #{step.folder_name}" unless @opts[:quiet]
 
         diff = Snaptoken::Diff.new(@config, last_step, step)
 
@@ -100,7 +108,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
         last_step = step
       end
-      puts
+      print "\n" unless @opts[:quiet]
       FileUtils.rmdir("0")
     end
     File.write("../.cached-diffs", Marshal.dump(diffs))
@@ -116,6 +124,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
     pages.delete "00.index"
     pages.each.with_index do |page, idx|
+      print "\r\e[K[doc/ -> doc/html_out/] #{page}.html" unless @opts[:quiet]
       md = File.read("#{page}.md")
       md =~ /^# (.+)$/
       title = $1
@@ -148,6 +157,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       File.write(File.join("html_out", "#{page}.html"), html)
       File.write(File.join("html_offline", "#{page}.html"), html)
     end
+    print "\n" unless @opts[:quiet]
 
     content = markdown.render(File.read("00.index.md"))
     content = Redcarpet::Render::SmartyPants.render(content)

@@ -8,10 +8,13 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
   end
 
   def self.usage
-    "[repo|steps|diff]"
+    "[options] [repo|steps|diff]"
   end
 
   def setopts!(o)
+    o.on("-q", "--quiet", "Don't output progress") do |q|
+      @opts[:quiet] = q
+    end
   end
 
   def run
@@ -50,16 +53,17 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
 
     needs! source.to_sym
 
+    args = @opts[:quiet] ? ["--quiet"] : []
     case source.to_sym
     when :repo
-      Snaptoken::Commands::Diff.new([], @config).run
-      Snaptoken::Commands::Undiff.new(["--force"], @config).run
+      Snaptoken::Commands::Diff.new(args + [], @config).run
+      Snaptoken::Commands::Undiff.new(args + ["--force"], @config).run
     when :steps
-      Snaptoken::Commands::Repo.new(["--force"], @config).run
-      Snaptoken::Commands::Diff.new([], @config).run
+      Snaptoken::Commands::Repo.new(args + ["--force"], @config).run
+      Snaptoken::Commands::Diff.new(args + [], @config).run
     when :diff
-      Snaptoken::Commands::Undiff.new(["--force"], @config).run
-      Snaptoken::Commands::Repo.new(["--force"], @config).run
+      Snaptoken::Commands::Undiff.new(args + ["--force"], @config).run
+      Snaptoken::Commands::Repo.new(args + ["--force"], @config).run
     end
   end
 end
