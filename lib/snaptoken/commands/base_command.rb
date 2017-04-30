@@ -39,6 +39,9 @@ class Snaptoken::Commands::BaseCommand
       true: "You are not in a leg working directory.",
       false: "You are already in a leg working directory."
     },
+    config_sync: {
+      true: "The :sync option in leg.yml must be set to 'repo' or 'steps'."
+    },
     steps_folder: {
       true: "There is no steps folder.",
       false: "There is already a steps folder."
@@ -79,6 +82,8 @@ class Snaptoken::Commands::BaseCommand
       case what
       when :config
         valid = true if @config
+      when :config_sync
+        valid = true if %w(repo steps).include?(@config[:sync])
       when :steps_folder
         valid = true if File.exist?(File.join(@config[:path], "steps"))
       when :steps

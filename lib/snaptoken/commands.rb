@@ -4,6 +4,7 @@ end
 
 require 'snaptoken/commands/base_command'
 
+require 'snaptoken/commands/sync'
 require 'snaptoken/commands/doc'
 require 'snaptoken/commands/fancy'
 require 'snaptoken/commands/diff'
