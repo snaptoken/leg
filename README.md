@@ -8,12 +8,6 @@ Command line tool that helps you make step-by-step programming walkthroughs.
 
 ## Usage
 
-`leg` is two things right now: a static site generator, and a converter between
-three different file formats for representing a series of diffs. In the future,
-the "static site generator" part will probably be replaced with "a library that
-can be used to make a plugin for `<insert static site generator of choice
-here>`".
-
 `leg` usage is inspired by `git`: You run it inside a "leg working directory",
 and you give it the name of a subcommand as the first argument. Run `leg help`
 for a short description of each subcommand.
@@ -32,38 +26,45 @@ steps. Each step has a name (alphanumeric with hyphens), and a tree of files.
 `leg` can convert between three different representations of this array of
 steps:
 
+* A `repo/` directory that contains a simple git repo, where each commit
+  represents a step. The commit's commit message stores the step name.
 * A `steps/` directory that contains a folder for each step. Each step folder
   is named `<step number>-<step name>`, and contains the actual files for that
   step in their entirety.
-* A `repo/` directory that contains a simple git repo, where each commit
-  represents a step. The commit's commit message stores the step name.
 * A `steps.diff` file, which is basically the output of `git format-patch`, but
   with `~~~ step: <step name>` as the header for each commit. This
   representation is a lot more suitable to be put under version control, than
   the other two representations.
 
-Here are the commands that convert between the representations:
+The `diff`, `undiff`, `repo`, and `unrepo` commands convert between the three
+representations. See the [helpful diagram](helpful-diagram.png) for what each
+command does. In practice, you will almost always want to use the higher-level
+`sync` command rather than these lower-level commands.
 
-* `leg undiff` converts `steps.diff` to `steps/`.
-* `leg repo` converts `steps/` to `repo/`.
-* `leg unrepo` converts `repo/` to `steps/`.
-* `leg diff` converts `repo/` to `steps.diff`.
+The `sync` command automatically converts one of the representations to both of
+the other two representations, thus syncing all three representations. For
+example, `leg sync repo` converts `repo/` to both `steps.diff` and `steps/`.
+`leg sync steps` and `leg sync diff` work similarly. If you specify a default
+source representation in `leg.yml` (e.g. `:sync: repo`), then you can simply
+run `leg sync` to sync from that representation.
 
-Here is a diagram that may be helpful:
-
-![Helpful diagram.](helpful-diagram.png)
-
-The `leg doc` command generates a static HTML site out of the Markdown (`*.md`)
+The `doc` command generates a static HTML site out of the Markdown (`*.md`)
 files in the `doc/` folder. It uses template HTML files in `doc/html_in/`, and
 puts the output files in `doc/html_out/` and `doc/html_offline/`. (The offline
 version is meant to include all the font files needed, whereas the normal
 version imports fonts from Google Fonts.) `leg doc -z` creates a `.zip` archive
 of the offline version.
 
-`leg doc` only uses the `steps/` representation of the steps, not `repo/` or
-`steps.diff`.
+`leg doc` automatically runs `leg sync` because it requires the `steps/`
+representation for generating the HTML diffs. So you'll need to set `:sync` to
+either `repo` or `steps` in `leg.yml` to use the `doc` command.
 
-The `leg doc` command is currently severely coupled to my website and my
+Generating the HTML diffs can take a while when there are a lot of steps, so
+`leg doc` caches the generated HTML in a hidden dotfile. If you're only making
+changes to files in the `doc/` directory, then you can run `leg doc -c` to use
+the cached HTML diffs, and it will be way faster.
+
+The `doc` command is currently severely coupled to my website and my
 specific needs. This'll change. But for now, I suggest using the `doc/html_in/`
 folder and `leg.yml` file of the
 [kilo-tutorial](https://github.com/snaptoken/kilo-tutorial) repo as a starting
@@ -76,13 +77,6 @@ the string `{{toc}}` which will be replaced with an actual table of contents.
 Every occurrence of `{{<step-name>}}` (e.g. `{{example-step}}`) on its own
 paragraph in a Markdown file will be replaced with the HTML for that step's
 diff.
-
-I'm aware of how unnecessarily complicated everything is. Hopefully sometime
-soon I will do a big cleanup of the code. I think I will deemphasize the
-`steps/` representation, making the `repo/` representation the main one. And
-I'll get rid of the `doc` command, and make it easy to use this gem as a
-library to generate your own HTML/whatever output for each diff, or to make a
-plugin for a static site generator like Jekyll.
 
 ## How to do things
 
