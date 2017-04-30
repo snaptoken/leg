@@ -17,7 +17,9 @@ class Snaptoken::Commands::BaseCommand
   def parseopts!
     parser = OptionParser.new do |o|
       o.banner =  "Usage: leg #{self.class.name} #{self.class.usage}"
-      o.separator "    #{self.class.summary}"
+      self.class.summary.split("\n").each do |line|
+        o.separator "    #{line}"
+      end
       o.separator ""
       o.separator "Options:"
       setopts!(o)

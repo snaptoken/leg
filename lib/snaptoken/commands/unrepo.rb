@@ -4,11 +4,12 @@ class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repo/ folder into steps/ folder"
+    "Convert repo/ to steps/. Doesn't overwrite\n" +
+    "steps/ unless forced."
   end
 
   def self.usage
-    "[options]"
+    "[-f] [-q]"
   end
 
   def setopts!(o)

@@ -4,11 +4,12 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert steps/ folder into a git repository"
+    "Convert steps/ to repo/. Doesn't overwrite\n" +
+    "repo/ unless forced."
   end
 
   def self.usage
-    "[options]"
+    "[-f] [-q]"
   end
 
   def setopts!(o)

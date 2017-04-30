@@ -4,11 +4,16 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Sync repo/, steps/, and steps.diff using one of them as the source"
+    "Sync repo/, steps/, and steps.diff using\n" +
+    "one of them as the source. The <source> can\n" +
+    "be 'repo', 'steps', or 'diff'. The :sync\n" +
+    "option in leg.yml sets the default source.\n" +
+    "If only one possible source exists, then that\n" +
+    "is the default source."
   end
 
   def self.usage
-    "[options] [repo|steps|diff]"
+    "[-q] [<source>]"
   end
 
   def setopts!(o)

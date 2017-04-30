@@ -4,7 +4,10 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert a step number or name to a git commit reference"
+    "Get the commit hash in repo/ for a step\n" +
+    "name or step number. `leg <step-number>`\n" +
+    "can be used as a shortcut for\n" +
+    "`leg ref <step-number>`."
   end
 
   def self.usage

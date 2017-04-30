@@ -4,11 +4,12 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert steps.diff to steps/ folder"
+    "Convert steps.diff to steps/. Doesn't\n" +
+    "overwrite steps/ unless forced."
   end
 
   def self.usage
-    "[options]"
+    "[-f] [-q]"
   end
 
   def setopts!(o)

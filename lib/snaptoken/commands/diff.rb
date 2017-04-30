@@ -4,11 +4,11 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repo/ into a single file containing diffs for each step"
+    "Convert repo/ to steps.diff."
   end
 
   def self.usage
-    "[options]"
+    "[-q]"
   end
 
   def setopts!(o)

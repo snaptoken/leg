@@ -6,11 +6,12 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Renders files in doc folder into an HTML book"
+    "Render files in doc/ into an HTML book.\n" +
+    "(Automatically runs the `sync` command.)"
   end
 
   def self.usage
-    "[options]"
+    "[-c] [-z] [-q]"
   end
 
   def setopts!(o)

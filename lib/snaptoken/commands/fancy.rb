@@ -4,7 +4,8 @@ class Snaptoken::Commands::Fancy < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Run steps.diff through colordiff, diff-so-fancy, and less"
+    "Run steps.diff through colordiff,\n" +
+    "diff-so-fancy, and less."
   end
 
   def self.usage

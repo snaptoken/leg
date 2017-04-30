@@ -4,11 +4,12 @@ class Snaptoken::Commands::Help < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Print out command list, or get help on a specific command"
+    "Print out list of commands, or get help\n" +
+    "on a specific command."
   end
 
   def self.usage
-    "[command]"
+    "[<command>]"
   end
 
   def setopts!(o)
@@ -21,8 +22,12 @@ class Snaptoken::Commands::Help < Snaptoken::Commands::BaseCommand
       puts "Commands:"
       Snaptoken::Commands::LIST.each do |cmd|
         puts "  #{cmd.name} #{cmd.usage}"
-        puts "      #{cmd.summary}"
+        cmd.summary.split("\n").each do |line|
+          puts "      #{line}"
+        end
       end
+      puts
+      puts "For more help on a specific command, run `leg help <command>`."
     elsif cmd = Snaptoken::Commands::LIST.find { |cmd| cmd.name == @args.first }
       cmd.new(["--help"], @config)
     else

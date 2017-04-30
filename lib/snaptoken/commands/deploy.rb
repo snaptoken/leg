@@ -4,7 +4,8 @@ class Snaptoken::Commands::Deploy < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Pushes output files in doc/ to production server"
+    "Push output files in doc/html_out/ to\n" +
+    "production server (requires ftp.yml)."
   end
 
   def self.usage
