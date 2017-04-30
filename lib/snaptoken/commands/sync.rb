@@ -13,10 +13,15 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
   end
 
   def self.usage
-    "[-q] [<source>]"
+    "[-q] [-s <source>]"
   end
 
   def setopts!(o)
+    o.on("-s", "--source SOURCE", [:repo, :steps, :diff],
+         "Override the default sync source") do |src|
+      @opts[:source] = src
+    end
+
     o.on("-q", "--quiet", "Don't output progress") do |q|
       @opts[:quiet] = q
     end
@@ -26,8 +31,8 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
     needs! :config
 
     source = nil
-    if !@args.empty?
-      source = @args.first
+    if @opts[:source]
+      source = @opts[:source].to_s
     else
       FileUtils.cd(@config[:path])
       repo_exists = File.exist?("repo")

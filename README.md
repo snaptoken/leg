@@ -43,10 +43,11 @@ command does. In practice, you will almost always want to use the higher-level
 
 The `sync` command automatically converts one of the representations to both of
 the other two representations, thus syncing all three representations. For
-example, `leg sync repo` converts `repo/` to both `steps.diff` and `steps/`.
-`leg sync steps` and `leg sync diff` work similarly. If you specify a default
-source representation in `leg.yml` (e.g. `:sync: repo`), then you can simply
-run `leg sync` to sync from that representation.
+example, `leg sync --source=repo` converts `repo/` to both `steps.diff` and
+`steps/`. `leg sync --source=steps` and `leg sync --source=diff` work
+similarly. If you specify a default source representation in `leg.yml` (e.g.
+`:sync: repo`), then you can simply run `leg sync` to sync from that
+representation.
 
 The `doc` command generates a static HTML site out of the Markdown (`*.md`)
 files in the `doc/` folder. It uses template HTML files in `doc/html_in/`, and

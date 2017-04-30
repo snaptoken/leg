@@ -30,7 +30,7 @@ class Snaptoken::Commands::BaseCommand
     end
     @opts = {}
     parser.parse!(@args)
-  rescue OptionParser::InvalidOption => e
+  rescue OptionParser::InvalidOption, OptionParser::InvalidArgument => e
     puts "#{e.message}"
     puts
     parser.parse("--help")
