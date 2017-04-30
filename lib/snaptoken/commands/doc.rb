@@ -9,8 +9,25 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     "Renders files in doc folder into an HTML book"
   end
 
+  def self.usage
+    "[options]"
+  end
+
+  def setopts!(o)
+    o.on("-c", "--cached", "Use cached diff HTML (much faster)") do |c|
+      @opts[:cached] = c
+    end
+
+    o.on("-z", "--zip", "Also create a .zip archive in doc/") do |z|
+      @opts[:zip] = z
+    end
+  end
+
   def run
     needs! :config, :steps_folder, :steps, :doc
+    if @opts[:cached]
+      needs! :cached_diffs
+    end
 
     FileUtils.cd(File.join(@config[:path], "doc")) do
       FileUtils.rm_rf("html_out")
@@ -21,7 +38,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       copy_static_files
       write_css
       write_html_files(prerender_diffs)
-      create_archive if @args.include? "-z"
+      create_archive if @opts[:zip]
     end
   end
 
@@ -66,7 +83,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def prerender_diffs
-    if @args.include? "-c"
+    if @opts[:cached]
       return Marshal.load(File.read("../.cached-diffs"))
     end
 

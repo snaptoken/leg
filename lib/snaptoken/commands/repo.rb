@@ -4,13 +4,29 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert steps folder into a version controlled repository"
+    "Convert steps/ folder into a git repository"
+  end
+
+  def self.usage
+    "[options]"
+  end
+
+  def setopts!(o)
+    o.on("-f", "--force", "Overwrite repo/ folder") do |f|
+      @opts[:force] = f
+    end
   end
 
   def run
-    needs! :config, :steps_folder, :steps, not: :repo
+    needs! :config, :steps_folder, :steps
 
     FileUtils.cd(@config[:path])
+
+    if @opts[:force]
+      FileUtils.rm_rf("repo")
+    else
+      needs! not: :repo
+    end
 
     FileUtils.mkdir("repo")
     repo = Rugged::Repository.init_at("repo")

@@ -7,6 +7,13 @@ class Snaptoken::Commands::Fancy < Snaptoken::Commands::BaseCommand
     "Run steps.diff through colordiff, diff-so-fancy, and less"
   end
 
+  def self.usage
+    ""
+  end
+
+  def setopts!(o)
+  end
+
   def run
     needs! :config, :diff
 

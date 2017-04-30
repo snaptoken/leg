@@ -7,6 +7,13 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
     "Convert repo into a single file containing diffs for each step"
   end
 
+  def self.usage
+    ""
+  end
+
+  def setopts!(o)
+  end
+
   def run
     needs! :config, :repo
 

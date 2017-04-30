@@ -2,14 +2,36 @@ class Snaptoken::Commands::BaseCommand
   def initialize(args, config)
     @args = args
     @config = config
+    parseopts!
   end
 
   def self.name; raise NotImplementedError; end
   def self.summary; raise NotImplementedError; end
+  def setopts!(o); raise NotImplementedError; end
   def run; raise NotImplementedError; end
 
   def self.inherited(subclass)
     Snaptoken::Commands::LIST << subclass
+  end
+
+  def parseopts!
+    parser = OptionParser.new do |o|
+      o.banner =  "Usage: leg #{self.class.name} #{self.class.usage}"
+      o.separator "    #{self.class.summary}"
+      o.separator ""
+      o.separator "Options:"
+      setopts!(o)
+      o.on_tail("-h", "--help", "Show this message") do
+        puts o
+        exit
+      end
+    end
+    @opts = {}
+    parser.parse!(@args)
+  rescue OptionParser::InvalidOption => e
+    puts "#{e.message}"
+    puts
+    parser.parse("--help")
   end
 
   ERROR_MSG = {
@@ -36,6 +58,9 @@ class Snaptoken::Commands::BaseCommand
     },
     doc_out: {
       true: "There are no doc output files."
+    },
+    cached_diffs: {
+      true: "There are no cached diffs."
     },
     ftp: {
       true: "There is no ftp.yml file."
@@ -66,6 +91,8 @@ class Snaptoken::Commands::BaseCommand
         valid = true if File.exist?(File.join(@config[:path], "doc"))
       when :doc_out
         valid = true if File.exist?(File.join(@config[:path], "doc/html_out"))
+      when :cached_diffs
+        valid = true if File.exist?(File.join(@config[:path], ".cached-diffs"))
       when :ftp
         valid = true if File.exist?(File.join(@config[:path], "ftp.yml"))
       else

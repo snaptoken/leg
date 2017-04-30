@@ -1,5 +1,6 @@
 require 'fileutils'
 require 'net/ftp'
+require 'optparse'
 require 'yaml'
 require 'rugged'
 require 'redcarpet'

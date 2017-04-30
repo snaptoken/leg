@@ -4,13 +4,29 @@ class Snaptoken::Commands::Unrepo < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repository into steps folder"
+    "Convert repo/ folder into steps/ folder"
+  end
+
+  def self.usage
+    "[options]"
+  end
+
+  def setopts!(o)
+    o.on("-f", "--force", "Overwrite steps/ folder") do |f|
+      @opts[:force] = f
+    end
   end
 
   def run
-    needs! :config, :repo, not: :steps_folder
+    needs! :config, :repo
 
     FileUtils.cd(@config[:path]) do
+      if @opts[:force]
+        FileUtils.rm_rf("steps")
+      else
+        needs! not: :steps_folder
+      end
+
       FileUtils.mkdir("steps")
 
       repo = Rugged::Repository.new("repo")

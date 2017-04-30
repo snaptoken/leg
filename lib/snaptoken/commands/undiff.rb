@@ -4,13 +4,29 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert steps.diff to steps folder"
+    "Convert steps.diff to steps/ folder"
+  end
+
+  def self.usage
+    "[options]"
+  end
+
+  def setopts!(o)
+    o.on("-f", "--force", "Overwrite steps/ folder") do |f|
+      @opts[:force] = f
+    end
   end
 
   def run
-    needs! :config, :diff, not: :steps_folder
+    needs! :config, :diff
 
     FileUtils.cd(@config[:path]) do
+      if @opts[:force]
+        FileUtils.rm_rf("steps")
+      else
+        needs! not: :steps_folder
+      end
+
       FileUtils.mkdir("steps")
       FileUtils.cd("steps") do
         File.open("../steps.diff", "r") do |f|

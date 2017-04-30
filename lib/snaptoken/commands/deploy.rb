@@ -7,6 +7,13 @@ class Snaptoken::Commands::Deploy < Snaptoken::Commands::BaseCommand
     "Pushes output files in doc/ to production server"
   end
 
+  def self.usage
+    "[pattern...]"
+  end
+
+  def setopts!(o)
+  end
+
   def run
     needs! :config, :doc, :doc_out, :ftp
 

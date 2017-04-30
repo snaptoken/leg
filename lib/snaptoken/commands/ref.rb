@@ -7,6 +7,13 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
     "Convert a step number or name to a git commit reference"
   end
 
+  def self.usage
+    "[<step-name> | <step-number>]"
+  end
+
+  def setopts!(o)
+  end
+
   def run
     needs! :config, :repo
 
