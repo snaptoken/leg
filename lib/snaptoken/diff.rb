@@ -119,7 +119,7 @@ class Snaptoken::Diff
           if cur.dirty?
             to_render = cur.contents + to_render
           else
-            summary = cur.lines.map { |n| code_hl[n] }.join(" ... ").gsub("\n", "")
+            summary = cur.lines.map { |n| code_hl[n] }.join(" &hellip; ").gsub("\n", "")
             html << "<div class=\"line folded\">#{summary}</div>"
           end
         elsif !cur.omit?

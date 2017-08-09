@@ -79,7 +79,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
     theme_css = theme.render(scope: ".highlight")
     if @config[:bold_weight]
-      theme_css.gsub!("font-weight: bold;", "font-weight: #{@config[:bold_weight]}")
+      theme_css.gsub!("font-weight: bold;", "font-weight: #{@config[:bold_weight]};")
     end
 
     css = File.read("html_in/style.css")
@@ -104,7 +104,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
         print "\r\e[K[steps/ -> .cached-diffs] #{step.folder_name}" unless @opts[:quiet]
 
         diff = Snaptoken::Diff.new(@config, last_step, step)
-
         diffs[step.name] = diff.html.values.join("\n")
 
         last_step = step
@@ -145,7 +144,9 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       content = markdown.render(md)
       content = Redcarpet::Render::SmartyPants.render(content)
       content.gsub!(/<\/code>&lsquo;/) { "</code>&rsquo;" }
-      content.gsub!(/^\s*<h([23456]) id="([^"]+)">(.+)<\/h\d>$/) { "<h#{$1} id=\"#{$2}\"><a href=\"##{$2}\">#{$3}</a></h#{$1}>" }
+      content.gsub!(/^\s*<h([23456]) id="([^"]+)">(.+)<\/h\d>$/) {
+        "<h#{$1} id=\"#{$2}\"><a href=\"##{$2}\">#{$3}</a></h#{$1}>"
+      }
       content.gsub!(/<p>{{([\w-]+)}}<\/p>/) { diffs[$1] }
 
       html = html_template.dup

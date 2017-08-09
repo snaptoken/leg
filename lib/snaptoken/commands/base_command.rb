@@ -16,7 +16,7 @@ class Snaptoken::Commands::BaseCommand
 
   def parseopts!
     parser = OptionParser.new do |o|
-      o.banner =  "Usage: leg #{self.class.name} #{self.class.usage}"
+      o.banner = "Usage: leg #{self.class.name} #{self.class.usage}"
       self.class.summary.split("\n").each do |line|
         o.separator "    #{line}"
       end
@@ -80,31 +80,31 @@ class Snaptoken::Commands::BaseCommand
     no = Array(options[:not]).map { |w| [w, false] }
 
     (yes + no).each do |what, v|
-      valid = false
-      case what
-      when :config
-        valid = true if @config
-      when :config_sync
-        valid = true if %w(repo steps).include?(@config[:sync])
-      when :steps_folder
-        valid = true if File.exist?(File.join(@config[:path], "steps"))
-      when :steps
-        valid = true if steps.length > 0
-      when :repo
-        valid = true if File.exist?(File.join(@config[:path], "repo"))
-      when :diff
-        valid = true if File.exist?(File.join(@config[:path], "steps.diff"))
-      when :doc
-        valid = true if File.exist?(File.join(@config[:path], "doc"))
-      when :doc_out
-        valid = true if File.exist?(File.join(@config[:path], "doc/html_out"))
-      when :cached_diffs
-        valid = true if File.exist?(File.join(@config[:path], ".cached-diffs"))
-      when :ftp
-        valid = true if File.exist?(File.join(@config[:path], "ftp.yml"))
-      else
-        raise NotImplementedError
-      end
+      valid =
+        case what
+        when :config
+          !!@config
+        when :config_sync
+          %w(repo steps).include?(@config[:sync])
+        when :steps_folder
+          File.exist?(File.join(@config[:path], "steps"))
+        when :steps
+          steps.length > 0
+        when :repo
+          File.exist?(File.join(@config[:path], "repo"))
+        when :diff
+          File.exist?(File.join(@config[:path], "steps.diff"))
+        when :doc
+          File.exist?(File.join(@config[:path], "doc"))
+        when :doc_out
+          File.exist?(File.join(@config[:path], "doc/html_out"))
+        when :cached_diffs
+          File.exist?(File.join(@config[:path], ".cached-diffs"))
+        when :ftp
+          File.exist?(File.join(@config[:path], "ftp.yml"))
+        else
+          raise NotImplementedError
+        end
 
       if valid != v
         puts "Error: " + ERROR_MSG[what][v.to_s.to_sym]
@@ -119,27 +119,12 @@ class Snaptoken::Commands::BaseCommand
     end.compact.sort_by(&:number)
   end
 
-  def current_step
-    if @config[:step_path]
-      Snaptoken::Step.from_folder_name(File.basename(@config[:step_path]))
-    end
-  end
-
   def latest_step
     steps.last
   end
 
-  def current_or_latest_step
-    current_step || latest_step
-  end
-
   def step_path(step)
     File.join(@config[:path], "steps", step.folder_name)
-  end
-
-  def select_step(step, &block)
-    puts "Selecting step: #{step.folder_name}"
-    FileUtils.cd(step_path(step), &block)
   end
 end
 
