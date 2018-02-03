@@ -20,26 +20,37 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    FileUtils.cd(File.join(@config[:path], "repo")) do
-      patches = `git format-patch --stdout -p --no-signature --histogram --root master`
-      File.open("../steps.diff", "w") do |f|
-        step_num = 1
-        patches.each_line do |line|
-          if line =~ /^(From|Date|index)/
-            # skip
-          elsif line =~ /^Subject: \[[^\]]*\](.*)$/
-            break if $1.strip == "-"
-            f << "\n" unless step_num == 1
-            step = Snaptoken::Step.from_commit_msg(step_num, $1.strip)
-            print "\r\e[K[repo/ -> steps.diff] #{step.folder_name}" unless @opts[:quiet]
-            f << "~~~ step: #{step.commit_msg}\n"
-            step_num += 1
-          elsif line.chomp.length > 0
-            f << line
-          end
+    FileUtils.cd(@config[:path]) do
+      repo = Rugged::Repository.new("repo")
+      empty_tree = Rugged::Tree.empty(repo)
+
+      walker = Rugged::Walker.new(repo)
+      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
+      walker.push(repo.branches.find { |b| b.name == "master" }.target)
+
+      output = ""
+      filename = "steps.leg"
+      walker.each.with_index do |commit, idx|
+        commit_message = commit.message.strip
+        last_commit = commit.parents.first
+        diff = (last_commit || empty_tree).diff(commit)
+        patch = diff.patch.strip
+
+        is_empty_commit = diff.deltas.all? { |d| d.new_file[:path] == ".dummyleg" }
+
+        if is_empty_commit && commit_message =~ /\A~~~ (.+)\z/
+          File.write(filename, output) unless output.empty?
+
+          output = ""
+          filename = "#{$1}.leg"
+        else
+          output << "~~~\n\n"
+          output << commit_message << "\n\n" unless commit_message.empty?
+          output << patch << "\n\n" unless is_empty_commit
         end
-        print "\n" unless @opts[:quiet]
       end
+
+      File.write(filename, output) unless output.empty?
     end
   end
 end

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'snaptoken'
-  s.version     = '0.24.1'
+  s.version     = '0.25.0'
   s.license     = 'MIT'
   s.summary     = 'tools for .leg files'
   s.author      = 'Jeremy Ruten'
