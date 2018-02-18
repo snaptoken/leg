@@ -32,6 +32,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
       filename = "steps.leg"
       walker.each.with_index do |commit, idx|
         commit_message = commit.message.strip
+        next if commit_message == "-"
         last_commit = commit.parents.first
         diff = (last_commit || empty_tree).diff(commit)
         patch = diff.patch.strip
