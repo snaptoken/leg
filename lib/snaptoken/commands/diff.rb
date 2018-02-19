@@ -30,24 +30,24 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
 
       output = ""
       filename = "steps.leg"
-      walker.each.with_index do |commit, idx|
+      walker.each do |commit|
         commit_message = commit.message.strip
         next if commit_message == "-"
         last_commit = commit.parents.first
         diff = (last_commit || empty_tree).diff(commit)
-        patch = diff.patch.strip
+        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
 
-        is_empty_commit = diff.deltas.all? { |d| d.new_file[:path] == ".dummyleg" }
-
-        if is_empty_commit && commit_message =~ /\A~~~ (.+)\z/
+        if patches.empty? && commit_message =~ /\A~~~ (.+)\z/
           File.write(filename, output) unless output.empty?
 
           output = ""
           filename = "#{$1}.leg"
         else
+          patch = patches.map(&:to_s).join("\n")
+
           output << "~~~\n\n"
           output << commit_message << "\n\n" unless commit_message.empty?
-          output << patch << "\n\n" unless is_empty_commit
+          output << patch << "\n" unless patches.empty?
         end
       end
 

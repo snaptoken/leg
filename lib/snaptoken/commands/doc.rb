@@ -33,8 +33,9 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     if @opts[:cached]
       needs! :cached_diffs
     else
-      sync_args = @opts[:quiet] ? ["--quiet"] : []
-      Snaptoken::Commands::Sync.new(sync_args, @config).run
+      needs! :repo
+      #sync_args = @opts[:quiet] ? ["--quiet"] : []
+      #Snaptoken::Commands::Sync.new(sync_args, @config).run
       @steps = nil # XXX just in case @steps were already cached
     end
 
@@ -97,19 +98,34 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     end
 
     diffs = {}
-    FileUtils.cd("../steps") do
-      FileUtils.mkdir_p("0")
-      last_step = Snaptoken::Step.new(0, nil, [])
-      steps.each do |step|
-        print "\r\e[K[steps/ -> .cached-diffs] #{step.folder_name}" unless @opts[:quiet]
+    FileUtils.cd(@config[:path]) do
+      repo = Rugged::Repository.new("repo")
+      empty_tree = Rugged::Tree.empty(repo)
 
-        diff = Snaptoken::Diff.new(@config, last_step, step)
-        diffs[step.name] = diff.html.values.join("\n")
+      walker = Rugged::Walker.new(repo)
+      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
+      walker.push(repo.branches.find { |b| b.name == "master" }.target)
 
-        last_step = step
+      step_num = 1
+      walker.each do |commit|
+        commit_message = commit.message.strip
+        next if commit_message == "-"
+        summary = commit_message.lines.first.strip
+        step_name = summary.split(' ').first # temporarararary
+        last_commit = commit.parents.first
+        diff = (last_commit || empty_tree).diff(commit, context_lines: 100_000, ignore_whitespace_change: true)
+        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
+        next if patches.empty?
+
+        patch = patches.map(&:to_s).join("\n")
+
+        print "\r\e[K[repo/ -> .cached-diffs] #{step_name}" unless @opts[:quiet]
+
+        diff = Snaptoken::Diff.new(@config, patch, step_num, step_name)
+        diffs[step_name] = diff.html.values.join("\n")
+        step_num += 1
       end
       print "\n" unless @opts[:quiet]
-      FileUtils.rmdir("0")
     end
     File.write("../.cached-diffs", Marshal.dump(diffs))
     diffs

@@ -1,16 +1,13 @@
 class Snaptoken::Diff
-  GIT_DIFF_OPTIONS = "--histogram --unified=100000 --ignore-space-change --no-index"
-
   attr_reader :files, :html
 
-  def initialize(config, step_a, step_b)
-    git_diff = `git diff #{GIT_DIFF_OPTIONS} #{step_a.folder_name} #{step_b.folder_name}`
-    parse_git_diff(git_diff)
+  def initialize(config, patch, step_num, step_name)
+    parse_git_diff(patch)
     @files.values.each(&:omit_adjacent_removals!)
 
     @html = {}
     @files.each do |filename, file|
-      @html[filename] = file.to_html(config, step_b)
+      @html[filename] = file.to_html(config, step_num, step_name)
     end
   end
 
@@ -96,7 +93,7 @@ class Snaptoken::Diff
       end
     end
 
-    def to_html(config, step)
+    def to_html(config, step_num, step_name)
       formatter = Rouge::Formatters::HTML.new
       formatter = HTMLLineByLine.new(formatter)
 
@@ -106,9 +103,9 @@ class Snaptoken::Diff
       html = ""
       html << "<div class=\"diff\">\n"
       html << "<div class=\"diff-header\">\n"
-      html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/blob/#{step.name}/#{@filename}\">#{@filename}</a></div>\n"
-      html << "  <div class=\"step-number\">Step #{step.number}</div>\n"
-      html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/tree/#{step.name}\">#{step.name}</a></div>\n"
+      html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/blob/#{step_name}/#{@filename}\">#{@filename}</a></div>\n"
+      html << "  <div class=\"step-number\">Step #{step_num}</div>\n"
+      html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/tree/#{step_name}\">#{step_name}</a></div>\n"
       html << "</div>"
       html << "<pre class=\"highlight\"><code>"
 
@@ -130,13 +127,13 @@ class Snaptoken::Diff
       end
       html << "</code></pre>\n"
 
-      unless step.data.empty?
-        html << "<div class=\"diff-footer\">\n"
-        step.data.each do |tag|
-          html << "  <div class=\"diff-tag-#{tag}\">#{config[:tags][tag.to_sym]}</div>\n"
-        end
-        html << "</div>\n"
-      end
+      #unless step.data.empty?
+      #  html << "<div class=\"diff-footer\">\n"
+      #  step.data.each do |tag|
+      #    html << "  <div class=\"diff-tag-#{tag}\">#{config[:tags][tag.to_sym]}</div>\n"
+      #  end
+      #  html << "</div>\n"
+      #end
 
       html << "</div>\n"
 
@@ -170,7 +167,7 @@ class Snaptoken::Diff
 
     git_diff.lines.each do |line|
       if line =~ /^diff --git (\S+) (\S+)$/
-        diff_file = DiffFile.new($2.split("/")[2..-1].join("/"))
+        diff_file = DiffFile.new($2.split("/")[1..-1].join("/"))
         @files[diff_file.filename] = diff_file
         section_stack = [diff_file]
         line_idx = -1
@@ -179,6 +176,8 @@ class Snaptoken::Diff
         diff_file.new_file!
       elsif line.start_with? '@@'
         in_diff = true
+      elsif in_diff && line[0] == '\\'
+        # ignore "\ No newline at end of file"
       elsif in_diff && [' ', '+', '-'].include?(line[0])
         type = {' ' => :nochange, '+' => :add, '-' => :remove }[line[0]]
         diff_file.append_line(line[1..-1])
