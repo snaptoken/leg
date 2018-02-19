@@ -41,16 +41,6 @@ class Snaptoken::Commands::BaseCommand
       true: "You are not in a leg working directory.",
       false: "You are already in a leg working directory."
     },
-    config_sync: {
-      true: "The :sync option in leg.yml must be set to 'repo' or 'steps'."
-    },
-    steps_folder: {
-      true: "There is no steps folder.",
-      false: "There is already a steps folder."
-    },
-    steps: {
-      true: "There are no steps in the steps folder."
-    },
     repo: {
       true: "There is no repo folder.",
       false: "There is already a repo folder."
@@ -66,9 +56,6 @@ class Snaptoken::Commands::BaseCommand
     },
     cached_diffs: {
       true: "There are no cached diffs."
-    },
-    ftp: {
-      true: "There is no ftp.yml file."
     }
   }
 
@@ -84,12 +71,6 @@ class Snaptoken::Commands::BaseCommand
         case what
         when :config
           !!@config
-        when :config_sync
-          %w(repo steps).include?(@config[:sync])
-        when :steps_folder
-          File.exist?(File.join(@config[:path], "steps"))
-        when :steps
-          steps.length > 0
         when :repo
           File.exist?(File.join(@config[:path], "repo"))
         when :diff
@@ -100,8 +81,6 @@ class Snaptoken::Commands::BaseCommand
           File.exist?(File.join(@config[:path], "doc/html_out"))
         when :cached_diffs
           File.exist?(File.join(@config[:path], ".cached-diffs"))
-        when :ftp
-          File.exist?(File.join(@config[:path], "ftp.yml"))
         else
           raise NotImplementedError
         end
@@ -111,20 +90,6 @@ class Snaptoken::Commands::BaseCommand
         exit!
       end
     end
-  end
-
-  def steps
-    @steps ||= Dir[File.join(@config[:path], "steps/*")].map do |f|
-      Snaptoken::Step.from_folder_name(File.basename(f)) if File.directory?(f)
-    end.compact.sort_by(&:number)
-  end
-
-  def latest_step
-    steps.last
-  end
-
-  def step_path(step)
-    File.join(@config[:path], "steps", step.folder_name)
   end
 end
 
