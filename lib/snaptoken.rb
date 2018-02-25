@@ -12,4 +12,4 @@ end
 require 'snaptoken/cli'
 require 'snaptoken/commands'
 require 'snaptoken/diff'
-
+require 'snaptoken/diff_line'
