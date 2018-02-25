@@ -64,5 +64,63 @@ class Snaptoken::Diff
 
     diffs
   end
+
+  def to_html(config, step_num, step_name)
+    formatter = Rouge::Formatters::HTML.new
+    formatter = HTMLLineByLine.new(formatter)
+
+    file_contents = @lines.map(&:line).join("\n")
+    lexer = Rouge::Lexer.guess(filename: @filename, source: file_contents)
+    code_hl = formatter.format(lexer.lex(file_contents)).lines.each(&:chomp!)
+
+    html = ""
+    html << "<div class=\"diff\">\n"
+    html << "<div class=\"diff-header\">\n"
+    html << "  <div class=\"step-filename\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/blob/#{step_name}/#{@filename}\">#{@filename}</a></div>\n"
+    html << "  <div class=\"step-number\">Step #{step_num}</div>\n"
+    html << "  <div class=\"step-name\"><a href=\"https://github.com/snaptoken/#{config[:name]}-src/tree/#{step_name}\">#{step_name}</a></div>\n"
+    html << "</div>"
+    html << "<pre class=\"highlight\"><code>"
+
+    @lines.each.with_index do |diff_line, idx|
+      if diff_line.type == :folded
+        summary = diff_line.line_numbers.map { |n| code_hl[n] }.join(" &hellip; ").gsub("\n", "")
+        html << "<div class=\"line folded\">#{summary}</div>"
+      else
+        tag = {unchanged: :div, added: :ins, removed: :del}[diff_line.type]
+        tag = :div if self.is_new_file
+        html << "<#{tag} class=\"line\">#{code_hl[idx]}</#{tag}>"
+      end
+    end
+
+    html << "</code></pre>\n"
+
+    #unless step.data.empty?
+    #  html << "<div class=\"diff-footer\">\n"
+    #  step.data.each do |tag|
+    #    html << "  <div class=\"diff-tag-#{tag}\">#{config[:tags][tag.to_sym]}</div>\n"
+    #  end
+    #  html << "</div>\n"
+    #end
+
+    html << "</div>\n"
+
+    html
+  end
+
+  class HTMLLineByLine < Rouge::Formatter
+    def initialize(formatter)
+      @formatter = formatter
+    end
+
+    def stream(tokens, &b)
+      token_lines(tokens) do |line|
+        line.each do |tok, val|
+          yield @formatter.span(tok, val)
+        end
+        yield "\n"
+      end
+    end
+  end
 end
 

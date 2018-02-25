@@ -8,7 +8,7 @@ class Snaptoken::DiffLine
       raise ArgumentError, "type must be one of: #{TYPES.inspect}"
     end
     @type = type
-    @line = line
+    @line = line.chomp
     @line_numbers = line_numbers
   end
 

@@ -120,8 +120,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
         print "\r\e[K[repo/ -> .cached-diffs] #{step_name}" unless @opts[:quiet]
 
-        diff = Snaptoken::Diff.new(@config, patch, step_num, step_name)
-        diffs[step_name] = diff.html.values.join("\n")
+        diffs[step_name] = Snaptoken::Diff.parse(patch).map { |file_diff| file_diff.to_html(@config, step_num, step_name) }.join("\n")
         step_num += 1
       end
       print "\n" unless @opts[:quiet]
