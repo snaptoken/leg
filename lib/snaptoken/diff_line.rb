@@ -1,14 +1,15 @@
 class Snaptoken::DiffLine
   TYPES = [:added, :removed, :unchanged, :folded]
 
-  attr_reader :type, :line, :line_numbers
+  attr_reader :type, :source, :line_numbers
+  attr_writer :source, :line_numbers
 
-  def initialize(type, line, line_numbers)
+  def initialize(type, source, line_numbers)
     unless TYPES.include? type
       raise ArgumentError, "type must be one of: #{TYPES.inspect}"
     end
     @type = type
-    @line = line.chomp
+    @source = source.chomp
     @line_numbers = line_numbers
   end
 
@@ -20,6 +21,6 @@ class Snaptoken::DiffLine
   end
 
   def blank?
-    @line.strip.empty?
+    @source.strip.empty?
   end
 end

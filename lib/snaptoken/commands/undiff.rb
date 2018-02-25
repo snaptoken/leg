@@ -53,7 +53,7 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
                 end
                 print "\r\e[K[litdiff -> repo/] Step #{step_num}" unless @opts[:quiet]
               elsif cur_diff
-                cur_diff << line
+                cur_diff << line.sub(/^\|/, " ")
               elsif line =~ /^diff --git/
                 cur_diff = line
               else

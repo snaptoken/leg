@@ -44,6 +44,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
           filename = "#{$1}.leg"
         else
           patch = patches.map(&:to_s).join("\n")
+          patch.gsub!(/^ /, "|")
 
           output << "~~~\n\n"
           output << commit_message << "\n\n" unless commit_message.empty?

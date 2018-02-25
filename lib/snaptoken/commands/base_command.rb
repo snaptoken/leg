@@ -1,4 +1,6 @@
 class Snaptoken::Commands::BaseCommand
+  attr_reader :config
+
   def initialize(args, config)
     @args = args
     @config = config
@@ -48,11 +50,8 @@ class Snaptoken::Commands::BaseCommand
     diff: {
       true: "There is no steps.diff file."
     },
-    doc: {
-      true: "There is no doc folder."
-    },
-    doc_out: {
-      true: "There are no doc output files."
+    template: {
+      true: "There is no template folder."
     },
     cached_diffs: {
       true: "There are no cached diffs."
@@ -75,10 +74,8 @@ class Snaptoken::Commands::BaseCommand
           File.exist?(File.join(@config[:path], "repo"))
         when :diff
           File.exist?(File.join(@config[:path], "steps.diff"))
-        when :doc
-          File.exist?(File.join(@config[:path], "doc"))
-        when :doc_out
-          File.exist?(File.join(@config[:path], "doc/html_out"))
+        when :template
+          File.exist?(File.join(@config[:path], "template"))
         when :cached_diffs
           File.exist?(File.join(@config[:path], ".cached-diffs"))
         else

@@ -1,73 +1,123 @@
-require "rouge/plugins/redcarpet"
-
 class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def self.name
     "doc"
   end
 
   def self.summary
-    "Render files in doc/ into an HTML book."
+    "Render repo/ into an HTML or Markdown book."
   end
 
   def self.usage
-    "[-c] [-z] [-q]"
+    "[-q]"
   end
 
   def setopts!(o)
-    o.on("-c", "--cached", "Use cached diff HTML (much faster)") do |c|
-      @opts[:cached] = c
-    end
-
-    o.on("-z", "--zip", "Also create a .zip archive in doc/") do |z|
-      @opts[:zip] = z
-    end
-
     o.on("-q", "--quiet", "Don't output progress") do |q|
       @opts[:quiet] = q
     end
   end
 
   def run
-    needs! :config, :doc
-    if @opts[:cached]
-      needs! :cached_diffs
-    else
-      needs! :repo
-      #sync_args = @opts[:quiet] ? ["--quiet"] : []
-      #Snaptoken::Commands::Sync.new(sync_args, @config).run
-      @steps = nil # XXX just in case @steps were already cached
-    end
+    needs! :config, :repo
 
-    FileUtils.cd(File.join(@config[:path], "doc")) do
-      FileUtils.rm_rf("html_out")
-      FileUtils.rm_rf("html_offline")
-      FileUtils.mkdir("html_out")
-      FileUtils.mkdir("html_offline")
+    FileUtils.cd(@config[:path]) do
+      FileUtils.rm_rf("build")
+      FileUtils.mkdir_p("build/html")
+      FileUtils.mkdir_p("build/html-offline")
 
-      copy_static_files
-      write_css
-      write_html_files(prerender_diffs)
-      create_archive if @opts[:zip]
-    end
-  end
+      page_template = Snaptoken::DefaultTemplates::PAGE
+      include_default_css = true
+      if File.exist?("template/page.html.erb")
+        page_template = File.read("template/page.html.erb")
+        include_default_css = false
+      end
 
-  class HTMLRouge < Redcarpet::Render::HTML
-    include Rouge::Plugins::Redcarpet
-  end
+      step_template = Snaptoken::DefaultTemplates::STEP
+      if File.exist?("template/step.html.erb")
+        step_template = File.read("template/step.html.erb")
+      end
+      step_template.gsub!(/\\\s*/, "")
 
-  private
+      repo = Rugged::Repository.new("repo")
+      empty_tree = Rugged::Tree.empty(repo)
 
-  def copy_static_files
-    Dir["html_in/*"].each do |f|
-      name = File.basename(f)
-      unless %w(template.html template_index.html style.css fonts.css).include? name
-        FileUtils.cp_r(f, "html_out/#{name}") unless name == "fonts"
-        FileUtils.cp_r(f, "html_offline/#{name}")
+      walker = Rugged::Walker.new(repo)
+      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
+      walker.push(repo.branches.find { |b| b.name == "master" }.target)
+
+      step_num = 1
+      cur_page = Snaptoken::Page.new("steps.html")
+      pages = []
+      walker.each do |commit|
+        commit_message = commit.message.strip
+        next if commit_message == "-"
+        summary = commit_message.lines.first.strip
+        step_name = summary.split(' ').first # temporarararary
+        last_commit = commit.parents.first
+        diff = (last_commit || empty_tree).diff(commit, context_lines: 100_000, ignore_whitespace_change: true)
+        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
+
+        if patches.empty?
+          if commit_message =~ /\A~~~ (.+)\z/
+            pages << cur_page unless cur_page.empty?
+
+            cur_page = Snaptoken::Page.new("#{$1}.html")
+          else
+            cur_page << commit_message
+          end
+        else
+          patch = patches.map(&:to_s).join("\n")
+
+          print "\r\e[K[repo/ -> build/] #{step_name}" unless @opts[:quiet]
+
+          step_diffs = Snaptoken::Diff.parse(patch).map
+          cur_page << Snaptoken::Step.new(step_name, step_num, step_diffs)
+
+          step_num += 1
+        end
+      end
+      print "\n" unless @opts[:quiet]
+      pages << cur_page unless cur_page.empty?
+
+      pages.each do |page|
+        html = page.to_html(page_template, step_template, @config, pages, false)
+        File.write("build/html/#{page.filename}", html)
+
+        offline_html = page.to_html(page_template, step_template, @config, pages, true)
+        File.write("build/html-offline/#{page.filename}", offline_html)
+      end
+
+      Dir["template/*"].each do |f|
+        name = File.basename(f)
+        unless %w(page.html.erb step.html.erb).include? name
+          # XXX: currently only processes top-level ERB template files.
+          if name.end_with? ".erb"
+            offline = false
+            File.write("build/html/#{name[0..-5]}", ERB.new(File.read(f)).result(binding))
+
+            offline = true
+            File.write("build/html-offline/#{name[0..-5]}", ERB.new(File.read(f)).result(binding))
+          else
+            FileUtils.cp_r(f, "build/html/#{name}")
+            FileUtils.cp_r(f, "build/html-offline/#{name}")
+          end
+        end
+      end
+
+      if include_default_css && !File.exist?("build/html/style.css")
+        offline = false
+        File.write("build/html/style.css", ERB.new(Snaptoken::DefaultTemplates::CSS).result(binding))
+      end
+      if include_default_css && !File.exist?("build/html-offline/style.css")
+        offline = true
+        File.write("build/html-offline/style.css", ERB.new(Snaptoken::DefaultTemplates::CSS).result(binding))
       end
     end
   end
 
-  def write_css
+  private
+
+  def syntax_highlighting_css(scope)
     @config[:rouge_theme] ||= "github"
     if @config[:rouge_theme].is_a? String
       theme = Rouge::Theme.find(@config[:rouge_theme])
@@ -77,132 +127,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       theme.palette @config[:rouge_theme]
     end
 
-    theme_css = theme.render(scope: ".highlight")
-    if @config[:bold_weight]
-      theme_css.gsub!("font-weight: bold;", "font-weight: #{@config[:bold_weight]};")
-    end
-
-    css = File.read("html_in/style.css")
-    css << theme_css
-
-    offline_css = css.sub(/^@import .+$/, File.read("html_in/fonts.css"))
-
-    File.write("html_out/style.css", css)
-    File.write("html_offline/style.css", offline_css)
-  end
-
-  def prerender_diffs
-    if @opts[:cached]
-      return Marshal.load(File.read("../.cached-diffs"))
-    end
-
-    diffs = {}
-    FileUtils.cd(@config[:path]) do
-      repo = Rugged::Repository.new("repo")
-      empty_tree = Rugged::Tree.empty(repo)
-
-      walker = Rugged::Walker.new(repo)
-      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
-      walker.push(repo.branches.find { |b| b.name == "master" }.target)
-
-      step_num = 1
-      walker.each do |commit|
-        commit_message = commit.message.strip
-        next if commit_message == "-"
-        summary = commit_message.lines.first.strip
-        step_name = summary.split(' ').first # temporarararary
-        last_commit = commit.parents.first
-        diff = (last_commit || empty_tree).diff(commit, context_lines: 100_000, ignore_whitespace_change: true)
-        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
-        next if patches.empty?
-
-        patch = patches.map(&:to_s).join("\n")
-
-        print "\r\e[K[repo/ -> .cached-diffs] #{step_name}" unless @opts[:quiet]
-
-        diffs[step_name] = Snaptoken::Diff.parse(patch).map { |file_diff| file_diff.to_html(@config, step_num, step_name) }.join("\n")
-        step_num += 1
-      end
-      print "\n" unless @opts[:quiet]
-    end
-    File.write("../.cached-diffs", Marshal.dump(diffs))
-    diffs
-  end
-
-  def write_html_files(diffs)
-    html_template = File.read("html_in/template.html")
-
-    index = ""
-    html_renderer = HTMLRouge.new(with_toc_data: true)
-    markdown = Redcarpet::Markdown.new(html_renderer, fenced_code_blocks: true)
-    pages = Dir["*.md"].sort.map { |f| f.sub(/\.md$/, '') }
-    pages.delete "00.index"
-    pages.each.with_index do |page, idx|
-      print "\r\e[K[doc/ -> doc/html_out/] #{page}.html" unless @opts[:quiet]
-      md = File.read("#{page}.md")
-      md =~ /^# (.+)$/
-      title = $1
-
-      index << "<li><a href='#{page}.html'>#{title}</a></li>\n"
-
-      prev_link = "<a href='#'></a>"
-      if idx > 0
-        prev_link = "<a href='#{pages[idx-1]}.html'>&larr; prev</a>"
-      end
-
-      next_link = "<a href='#'></a>"
-      if idx < pages.length - 1
-        next_link = "<a href='#{pages[idx+1]}.html'>next &rarr;</a>"
-      end
-
-      content = markdown.render(md)
-      content = Redcarpet::Render::SmartyPants.render(content)
-      content.gsub!(/<\/code>&lsquo;/) { "</code>&rsquo;" }
-      content.gsub!(/^\s*<h([23456]) id="([^"]+)">(.+)<\/h\d>$/) {
-        "<h#{$1} id=\"#{$2}\"><a href=\"##{$2}\">#{$3}</a></h#{$1}>"
-      }
-      content.gsub!(/<p>{{([\w-]+)}}<\/p>/) { diffs[$1] }
-
-      html = html_template.dup
-      html.gsub!("{{title}}") { "#{idx+1}. #{title} | #{@config[:title]}" }
-      html.gsub!("{{prev_link}}") { prev_link }
-      html.gsub!("{{next_link}}") { next_link }
-      html.gsub!("{{version}}") { @config[:version] }
-      html.gsub!("{{content}}") { content }
-
-      File.write(File.join("html_out", "#{page}.html"), html)
-      File.write(File.join("html_offline", "#{page}.html"), html)
-    end
-    print "\n" unless @opts[:quiet]
-
-    content = markdown.render(File.read("00.index.md"))
-    content = Redcarpet::Render::SmartyPants.render(content)
-    content.gsub!(/<p>{{toc}}<\/p>/) { "<ol>#{index}</ol>" }
-
-    if File.exist?("html_in/template_index.html")
-      html = File.read("html_in/template_index.html")
-    else
-      html = html_template.dup
-    end
-
-    html.gsub!("{{title}}") { @config[:title] }
-    html.gsub!("{{prev_link}}") { "<a href='#'></a>" }
-    html.gsub!("{{next_link}}") { "<a href='#{pages.first}.html'>next &rarr;</a>" }
-    html.gsub!("{{version}}") { @config[:version] }
-    html.gsub!("{{content}}") { content }
-
-    File.write("html_out/index.html", html)
-    File.write("html_offline/index.html", html)
-  end
-
-  def create_archive
-    name = "#{@config[:name]}-tutorial-#{@config[:version]}"
-
-    FileUtils.mv("html_offline", name)
-
-    `zip -r #{name}.zip #{name}`
-
-    FileUtils.mv(name, "html_offline")
+    theme.render(scope: scope)
   end
 end
-
