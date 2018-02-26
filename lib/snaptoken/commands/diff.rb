@@ -46,7 +46,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
           patch = patches.map(&:to_s).join("\n")
           patch.gsub!(/^ /, "|")
 
-          output << "~~~\n\n"
+          output << "~~~\n\n" unless output.empty?
           output << commit_message << "\n\n" unless commit_message.empty?
           output << patch << "\n" unless patches.empty?
         end
