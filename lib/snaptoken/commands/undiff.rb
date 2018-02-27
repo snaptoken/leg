@@ -4,8 +4,8 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert steps.diff to repo/. Doesn't\n" +
-    "overwrite repo/ unless forced."
+    "Convert *.litdiff files to repo/.\n" +
+    "Doesn't overwrite repo/ unless forced."
   end
 
   def self.usage
@@ -37,8 +37,8 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
 
       FileUtils.cd("repo") do
         step_num = 0
-        Dir["../*.leg"].sort.each do |leg_path|
-          chapter_name = File.basename(leg_path).sub(/\.leg$/, "")
+        Dir["../*.litdiff"].sort.each do |leg_path|
+          chapter_name = File.basename(leg_path).sub(/\.litdiff$/, "")
           add_step(repo, step_num, "~~~ #{chapter_name}", nil)
           File.open(leg_path, "r") do |f|
             cur_message = nil

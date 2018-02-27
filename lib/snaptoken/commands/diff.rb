@@ -4,7 +4,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repo/ to steps.diff."
+    "Convert repo/ to *.litdiff files."
   end
 
   def self.usage
@@ -29,7 +29,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
       walker.push(repo.branches.find { |b| b.name == "master" }.target)
 
       output = ""
-      filename = "steps.leg"
+      filename = "steps.litdiff"
       walker.each do |commit|
         commit_message = commit.message.strip
         next if commit_message == "-"
@@ -41,7 +41,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
           File.write(filename, output) unless output.empty?
 
           output = ""
-          filename = "#{$1}.leg"
+          filename = "#{$1}.litdiff"
         else
           patch = patches.map(&:to_s).join("\n")
           patch.gsub!(/^ /, "|")
