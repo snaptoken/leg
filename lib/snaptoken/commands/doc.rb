@@ -20,25 +20,25 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    FileUtils.cd(@config[:path]) do
-      FileUtils.rm_rf("build")
-      FileUtils.mkdir_p("build/html")
-      FileUtils.mkdir_p("build/html-offline")
+    FileUtils.cd(File.join(@config[:path], "template")) do
+      FileUtils.rm_rf("../build")
+      FileUtils.mkdir_p("../build/html")
+      FileUtils.mkdir_p("../build/html-offline")
 
       page_template = Snaptoken::DefaultTemplates::PAGE
       include_default_css = true
-      if File.exist?("template/page.html.erb")
-        page_template = File.read("template/page.html.erb")
+      if File.exist?("page.html.erb")
+        page_template = File.read("page.html.erb")
         include_default_css = false
       end
 
       step_template = Snaptoken::DefaultTemplates::STEP
-      if File.exist?("template/step.html.erb")
-        step_template = File.read("template/step.html.erb")
+      if File.exist?("step.html.erb")
+        step_template = File.read("step.html.erb")
       end
       step_template.gsub!(/\\\s*/, "")
 
-      repo = Rugged::Repository.new("repo")
+      repo = Rugged::Repository.new("../repo")
       empty_tree = Rugged::Tree.empty(repo)
 
       walker = Rugged::Walker.new(repo)
@@ -81,36 +81,44 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
       pages.each do |page|
         html = page.to_html(page_template, step_template, @config, pages, false)
-        File.write("build/html/#{page.filename}", html)
+        File.write("../build/html/#{page.filename}", html)
 
         offline_html = page.to_html(page_template, step_template, @config, pages, true)
-        File.write("build/html-offline/#{page.filename}", offline_html)
+        File.write("../build/html-offline/#{page.filename}", offline_html)
       end
 
-      Dir["template/*"].each do |f|
-        name = File.basename(f)
-        unless %w(page.html.erb step.html.erb).include? name
-          # XXX: currently only processes top-level ERB template files.
-          if name.end_with? ".erb"
-            offline = false
-            File.write("build/html/#{name[0..-5]}", ERB.new(File.read(f)).result(binding))
+      template_params = {
+        config: config,
+        pages: pages,
+        syntax_highlighting_css: syntax_highlighting_css(".highlight")
+      }
 
-            offline = true
-            File.write("build/html-offline/#{name[0..-5]}", ERB.new(File.read(f)).result(binding))
-          else
-            FileUtils.cp_r(f, "build/html/#{name}")
-            FileUtils.cp_r(f, "build/html-offline/#{name}")
-          end
+      Dir["*"].each do |f|
+        name = File.basename(f)
+
+        next if %w(page.html.erb step.html.erb).include? name
+        next if name.start_with? "_"
+
+        # XXX: currently only processes top-level ERB template files.
+        if name.end_with? ".erb"
+          output = Snaptoken::Template.render_template(File.read(f), template_params.merge(offline: false))
+          File.write("../build/html/#{name[0..-5]}", output)
+
+          output = Snaptoken::Template.render_template(File.read(f), template_params.merge(offline: true))
+          File.write("../build/html-offline/#{name[0..-5]}", output)
+        else
+          FileUtils.cp_r(f, "../build/html/#{name}")
+          FileUtils.cp_r(f, "../build/html-offline/#{name}")
         end
       end
 
-      if include_default_css && !File.exist?("build/html/style.css")
-        offline = false
-        File.write("build/html/style.css", ERB.new(Snaptoken::DefaultTemplates::CSS).result(binding))
+      if include_default_css && !File.exist?("../build/html/style.css")
+        output = Snaptoken::Template.render_template(Snaptoken::DefaultTemplates::CSS, template_params.merge(offline: false))
+        File.write("../build/html/style.css", output)
       end
-      if include_default_css && !File.exist?("build/html-offline/style.css")
-        offline = true
-        File.write("build/html-offline/style.css", ERB.new(Snaptoken::DefaultTemplates::CSS).result(binding))
+      if include_default_css && !File.exist?("../build/html-offline/style.css")
+        output = Snaptoken::Template.render_template(Snaptoken::DefaultTemplates::CSS, template_params.merge(offline: true))
+        File.write("../build/html-offline/style.css", output)
       end
     end
   end

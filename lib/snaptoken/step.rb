@@ -11,7 +11,13 @@ class Snaptoken::Step
     step_name = @name
     step_number = @number
 
-    ERB.new(template).result(binding)
+    Snaptoken::Template.render_template(template,
+      config: config,
+      offline: offline,
+      diffs: @diffs,
+      step_name: step_name,
+      step_number: step_number
+    )
   end
 
   def syntax_highlight!

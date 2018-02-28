@@ -36,9 +36,16 @@ class Snaptoken::Page
     end
 
     page_number = pages.index(self) + 1
-    prev_page = page_number > 1 ? pages[page_number - 2] : nil
-    next_page = page_number < pages.length ? pages[page_number] : nil
 
-    ERB.new(template).result(binding)
+    Snaptoken::Template.render_template(template,
+      config: config,
+      pages: pages,
+      offline: offline,
+      title: title,
+      content: content,
+      page_number: page_number,
+      prev_page: page_number > 1 ? pages[page_number - 2] : nil,
+      next_page: page_number < pages.length ? pages[page_number] : nil
+    )
   end
 end
