@@ -48,7 +48,8 @@ class Snaptoken::Commands::BaseCommand
       false: "There is already a repo folder."
     },
     diff: {
-      true: "There is no steps.diff file."
+      true: "There is no diff folder.",
+      false: "There is already a diff folder."
     },
     template: {
       true: "There is no template folder."
@@ -73,7 +74,7 @@ class Snaptoken::Commands::BaseCommand
         when :repo
           File.exist?(File.join(@config[:path], "repo"))
         when :diff
-          File.exist?(File.join(@config[:path], "steps.diff"))
+          File.exist?(File.join(@config[:path], "diff"))
         when :template
           File.exist?(File.join(@config[:path], "template"))
         when :cached_diffs

@@ -4,14 +4,19 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
   end
 
   def self.summary
-    "Convert repo/ to *.litdiff files."
+    "Convert repo/ to diff/.\n" +
+    "Doesn't overwrite diff/ unless forced."
   end
 
   def self.usage
-    "[-q]"
+    "[-f ] [-q]"
   end
 
   def setopts!(o)
+    o.on("-f", "--force", "Overwrite diff/ folder") do |f|
+      @opts[:force] = f
+    end
+
     o.on("-q", "--quiet", "Don't output progress") do |q|
       @opts[:quiet] = q
     end
@@ -21,6 +26,14 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
     needs! :config, :repo
 
     FileUtils.cd(@config[:path]) do
+      if @opts[:force]
+        FileUtils.rm_rf("diff")
+      else
+        needs! not: :diff
+      end
+
+      FileUtils.mkdir("diff")
+
       repo = Rugged::Repository.new("repo")
       empty_tree = Rugged::Tree.empty(repo)
 
@@ -29,7 +42,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
       walker.push(repo.branches.find { |b| b.name == "master" }.target)
 
       output = ""
-      filename = "steps.litdiff"
+      filename = "diff/steps.litdiff"
       walker.each do |commit|
         commit_message = commit.message.strip
         next if commit_message == "-"
@@ -41,7 +54,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
           File.write(filename, output) unless output.empty?
 
           output = ""
-          filename = "#{$1}.litdiff"
+          filename = "diff/#{$1}.litdiff"
         else
           patch = patches.map(&:to_s).join("\n")
           patch.gsub!(/^ /, "|")
