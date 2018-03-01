@@ -37,17 +37,10 @@ module Snaptoken::DefaultTemplates
       <div class="diff">
         <div class="diff-header">
           <div class="step-filename">
-            <a href="https://github.com/snaptoken/<%= @config[:name] %>-src/blob/<%= step_name %>/<%= diff.filename %>">
-              <%= diff.filename %>
-            </a>
+            <%= diff.filename %>
           </div>
           <div class="step-number">
-            Step <%= step_num %>
-          </div>
-          <div class="step-name">
-            <a href="https://github.com/snaptoken/<%= @config[:name] %>-src/tree/<%= step_name %>">
-              <%= step_name %>
-            </a>
+            Step <%= number %>
           </div>
         </div>
         <pre class="highlight"><code>\\

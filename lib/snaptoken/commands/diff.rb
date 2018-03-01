@@ -24,49 +24,13 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
 
   def run
     needs! :config, :repo
+    needs! not: :diff unless @opts[:force]
 
-    FileUtils.cd(@config[:path]) do
-      if @opts[:force]
-        FileUtils.rm_rf("diff")
-      else
-        needs! not: :diff
-      end
+    repo_path = File.join(@config[:path], "repo")
+    diff_path = File.join(@config[:path], "diff")
 
-      FileUtils.mkdir("diff")
-
-      repo = Rugged::Repository.new("repo")
-      empty_tree = Rugged::Tree.empty(repo)
-
-      walker = Rugged::Walker.new(repo)
-      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
-      walker.push(repo.branches.find { |b| b.name == "master" }.target)
-
-      output = ""
-      filename = "diff/steps.litdiff"
-      walker.each do |commit|
-        commit_message = commit.message.strip
-        next if commit_message == "-"
-        last_commit = commit.parents.first
-        diff = (last_commit || empty_tree).diff(commit)
-        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
-
-        if patches.empty? && commit_message =~ /\A~~~ (.+)\z/
-          File.write(filename, output) unless output.empty?
-
-          output = ""
-          filename = "diff/#{$1}.litdiff"
-        else
-          patch = patches.map(&:to_s).join("\n")
-          patch.gsub!(/^ /, "|")
-
-          output << "~~~\n\n" unless output.empty?
-          output << commit_message << "\n\n" unless commit_message.empty?
-          output << patch << "\n" unless patches.empty?
-        end
-      end
-
-      File.write(filename, output) unless output.empty?
-    end
+    tutorial = Snaptoken::Tutorial.from_repo(repo_path)
+    tutorial.save_to_diff(diff_path)
   end
 end
 

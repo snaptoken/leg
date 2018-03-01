@@ -38,58 +38,19 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       end
       step_template.gsub!(/\\\s*/, "")
 
-      repo = Rugged::Repository.new("../repo")
-      empty_tree = Rugged::Tree.empty(repo)
+      tutorial = Snaptoken::Tutorial.from_repo("../repo")
 
-      walker = Rugged::Walker.new(repo)
-      walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
-      walker.push(repo.branches.find { |b| b.name == "master" }.target)
+      tutorial.pages.each do |page|
+        html = page.to_html(page_template, step_template, @config, tutorial.pages, false)
+        File.write("../build/html/#{page.filename}.html", html)
 
-      step_num = 1
-      cur_page = Snaptoken::Page.new("steps.html")
-      pages = []
-      walker.each do |commit|
-        commit_message = commit.message.strip
-        next if commit_message == "-"
-        summary = commit_message.lines.first.strip
-        step_name = summary.split(' ').first # temporarararary
-        last_commit = commit.parents.first
-        diff = (last_commit || empty_tree).diff(commit, context_lines: 100_000, ignore_whitespace_change: true)
-        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
-
-        if patches.empty?
-          if commit_message =~ /\A~~~ (.+)\z/
-            pages << cur_page unless cur_page.empty?
-
-            cur_page = Snaptoken::Page.new("#{$1}.html")
-          else
-            cur_page << commit_message
-          end
-        else
-          patch = patches.map(&:to_s).join("\n")
-
-          print "\r\e[K[repo/ -> build/] #{step_name}" unless @opts[:quiet]
-
-          step_diffs = Snaptoken::Diff.parse(patch).map
-          cur_page << Snaptoken::Step.new(step_name, step_num, step_diffs)
-
-          step_num += 1
-        end
-      end
-      print "\n" unless @opts[:quiet]
-      pages << cur_page unless cur_page.empty?
-
-      pages.each do |page|
-        html = page.to_html(page_template, step_template, @config, pages, false)
-        File.write("../build/html/#{page.filename}", html)
-
-        offline_html = page.to_html(page_template, step_template, @config, pages, true)
-        File.write("../build/html-offline/#{page.filename}", offline_html)
+        offline_html = page.to_html(page_template, step_template, @config, tutorial.pages, true)
+        File.write("../build/html-offline/#{page.filename}.html", offline_html)
       end
 
       template_params = {
         config: config,
-        pages: pages,
+        pages: tutorial.pages,
         syntax_highlighting_css: syntax_highlighting_css(".highlight")
       }
 
