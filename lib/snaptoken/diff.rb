@@ -54,7 +54,8 @@ class Snaptoken::Diff
         in_diff = false
       elsif !in_diff && line.start_with?('new file')
         cur_diff.is_new_file = true
-      elsif line =~ /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@$/
+      elsif line =~ /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
+        # TODO: somehow preserve function name that comes to the right of the @@ header?
         in_diff = true
         old_line_num = $1.to_i
         new_line_num = $3.to_i
@@ -135,28 +136,28 @@ class Snaptoken::Diff
     raise "can't create patch from empty diff" if @lines.empty?
     hunks = []
     cur_hunk = [@lines.first]
-    cur_line_nums = @lines.first.line_numbers
+    cur_line_nums = @lines.first.line_numbers.dup
     @lines[1..-1].each do |line|
       case line.type
       when :unchanged
-        cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : cur_line_nums[0] + 1
-        cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : cur_line_nums[1] + 1
-        same_hunk = (line.line_numbers == cur_line_nums)
+        cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : (cur_line_nums[0] + 1)
+        cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : (cur_line_nums[1] + 1)
       when :added
-        cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : cur_line_nums[1] + 1
-        same_hunk = (line.line_numbers[0] == cur_line_nums[1])
+        cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : (cur_line_nums[1] + 1)
       when :removed
-        cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : cur_line_nums[0] + 1
-        same_hunk = (line.line_numbers[0] == cur_line_nums[0])
+        cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : (cur_line_nums[0] + 1)
       when :folded
         raise "can't create patch from diff with folded lines"
       end
 
-      if !same_hunk
+      old_match = (line.line_numbers[0].nil? || line.line_numbers[0] == cur_line_nums[0])
+      new_match = (line.line_numbers[1].nil? || line.line_numbers[1] == cur_line_nums[1])
+
+      if !old_match || !new_match
         hunks << cur_hunk
 
         cur_hunk = []
-        cur_line_nums = line.line_numbers
+        cur_line_nums = line.line_numbers.dup
       end
 
       cur_hunk << line
