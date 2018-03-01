@@ -38,7 +38,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       end
       step_template.gsub!(/\\\s*/, "")
 
-      tutorial = Snaptoken::Tutorial.from_repo("../repo")
+      tutorial = Snaptoken::Tutorial.from_repo("../repo", full_diffs: true, diffs_ignore_whitespace: true)
 
       tutorial.pages.each do |page|
         html = page.to_html(page_template, step_template, @config, tutorial.pages, false)
