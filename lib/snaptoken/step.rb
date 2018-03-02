@@ -8,8 +8,8 @@ class Snaptoken::Step
   end
 
   def to_html(template, config, offline)
-    summary = @text.lines.first.strip
-    text_after_summary = @text.lines[1..-1].join("\n").strip
+    summary = (@text.lines.first || "").strip
+    text_after_summary = (@text.lines[1..-1] || []).join.strip
 
     Snaptoken::Template.render_template(template,
       config: config,

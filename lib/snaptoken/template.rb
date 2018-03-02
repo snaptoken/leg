@@ -16,5 +16,9 @@ module Snaptoken::Template
       contents = File.read(path)
       Snaptoken::Markdown.render(contents)
     end
+
+    def markdown(source)
+      Snaptoken::Markdown.render(source)
+    end
   end
 end

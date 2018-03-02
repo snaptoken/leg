@@ -69,6 +69,7 @@ class Snaptoken::Tutorial
           output << step_or_text << "\n\n"
         end
       end
+      output.chomp!
 
       filename = (page.filename || "steps") + ".litdiff"
       File.write(File.join(path, filename), output)
