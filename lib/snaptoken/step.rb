@@ -7,19 +7,18 @@ class Snaptoken::Step
     @diffs = diffs
   end
 
-  def to_html(template, config, offline)
+  def to_html(tutorial, offline)
     summary = (@text.lines.first || "").strip
     text_after_summary = (@text.lines[1..-1] || []).join.strip
 
-    Snaptoken::Template.render_template(template,
-      config: config,
+    Snaptoken::Template.new(tutorial.step_template, tutorial,
       offline: offline,
       number: @number,
       summary: summary,
       text: text_after_summary,
       full_text: @text,
       diffs: @diffs
-    )
+    ).render_template
   end
 
   def to_patch(options = {})

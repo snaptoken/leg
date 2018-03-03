@@ -3,7 +3,7 @@ require 'fileutils'
 require 'optparse'
 require 'redcarpet'
 require 'rouge'
-require "rouge/plugins/redcarpet"
+require 'rouge/plugins/redcarpet'
 require 'rugged'
 require 'yaml'
 

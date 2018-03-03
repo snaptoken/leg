@@ -1,9 +1,9 @@
 class Snaptoken::Commands::BaseCommand
   attr_reader :config
 
-  def initialize(args, config)
+  def initialize(args, tutorial)
     @args = args
-    @config = config
+    @tutorial = tutorial
     parseopts!
   end
 
@@ -70,15 +70,15 @@ class Snaptoken::Commands::BaseCommand
       valid =
         case what
         when :config
-          !!@config
+          !!@tutorial
         when :repo
-          File.exist?(File.join(@config[:path], "repo"))
+          File.exist?(File.join(@tutorial.path, "repo"))
         when :diff
-          File.exist?(File.join(@config[:path], "diff"))
+          File.exist?(File.join(@tutorial.path, "diff"))
         when :template
-          File.exist?(File.join(@config[:path], "template"))
+          File.exist?(File.join(@tutorial.path, "template"))
         when :cached_diffs
-          File.exist?(File.join(@config[:path], ".cached-diffs"))
+          File.exist?(File.join(@tutorial.path, ".cached-diffs"))
         else
           raise NotImplementedError
         end

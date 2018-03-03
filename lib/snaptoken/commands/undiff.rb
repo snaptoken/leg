@@ -26,16 +26,13 @@ class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
     needs! :config, :diff
     needs! not: :repo unless @opts[:force]
 
-    diff_path = File.join(@config[:path], "diff")
-    repo_path = File.join(@config[:path], "repo")
-    extra_path = File.join(@config[:path], "repo-extra")
+    options = {}
 
-    tutorial = Snaptoken::Tutorial.from_diff(diff_path)
-
+    extra_path = File.join(@tutorial.path, "repo-extra")
     if Dir.exist? extra_path
-      tutorial.save_to_repo(repo_path, extra_path: extra_path)
-    else
-      tutorial.save_to_repo(repo_path)
+      options[:extra_path] = extra_path
     end
+
+    @tutorial.load_from_diff.save_to_repo(options)
   end
 end

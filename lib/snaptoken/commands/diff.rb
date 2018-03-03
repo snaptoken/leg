@@ -26,11 +26,7 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
     needs! :config, :repo
     needs! not: :diff unless @opts[:force]
 
-    repo_path = File.join(@config[:path], "repo")
-    diff_path = File.join(@config[:path], "diff")
-
-    tutorial = Snaptoken::Tutorial.from_repo(repo_path)
-    tutorial.save_to_diff(diff_path)
+    @tutorial.load_from_repo.save_to_diff
   end
 end
 

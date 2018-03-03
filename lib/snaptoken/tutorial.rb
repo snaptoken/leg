@@ -1,13 +1,29 @@
 class Snaptoken::Tutorial
-  attr_accessor :config, :pages
+  attr_accessor :path, :name, :title, :version
+  attr_accessor :page_template, :step_template
+  attr_accessor :repo_author_name, :repo_author_email, :syntax_theme
 
-  def initialize(config = {})
-    @config = config
+  attr_reader :pages
+
+  def initialize(c = {})
+    @path = c[:path]
+    @name = c[:name] || "untitled"
+    @title = c[:title] || "Untitled Tutorial"
+    @version = c[:version] || "1.0"
+
+    @page_template = c[:page_template] || Snaptoken::DefaultTemplates::PAGE
+    @step_template = c[:step_template] || Snaptoken::DefaultTemplates::STEP
+
+    @repo_author_name = c[:repo_author_name]
+    @repo_author_email = c[:repo_author_email]
+    @syntax_theme = c[:syntax_theme]
+
     @pages = []
   end
 
   def <<(page)
     @pages << page
+    self
   end
 
   def step(number)
@@ -22,7 +38,9 @@ class Snaptoken::Tutorial
     end
   end
 
-  def save_to_repo(path, options = {})
+  def save_to_repo(options = {})
+    path = options[:path] || File.join(@path, "repo")
+
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
 
@@ -54,7 +72,9 @@ class Snaptoken::Tutorial
     end
   end
 
-  def save_to_diff(path)
+  def save_to_diff(options = {})
+    path = options[:path] || File.join(@path, "diff")
+
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
 
@@ -81,7 +101,9 @@ class Snaptoken::Tutorial
   #     multiple contextual hunks.
   #   diffs_ignore_whitespace: If true, diffs don't show changes to lines when
   #     only the amount of whitespace is changed.
-  def self.from_repo(path, options = {})
+  def load_from_repo(options = {})
+    path = options[:path] || File.join(@path, "repo")
+
     git_diff_options = {}
     git_diff_options[:context_lines] = 100_000 if options[:full_diffs]
     git_diff_options[:ignore_whitespace_change] = true if options[:diffs_ignore_whitespace]
@@ -95,7 +117,7 @@ class Snaptoken::Tutorial
 
     step_num = 1
     page = nil
-    tutorial = Snaptoken::Tutorial.new
+    @pages = []
     walker.each do |commit|
       commit_message = commit.message.strip
       next if commit_message == "-"
@@ -105,7 +127,7 @@ class Snaptoken::Tutorial
 
       if patches.empty?
         if commit_message =~ /\A~~~ (.+)\z/
-          tutorial << page unless page.nil?
+          self << page unless page.nil?
 
           page = Snaptoken::Page.new($1)
         else
@@ -125,13 +147,15 @@ class Snaptoken::Tutorial
       end
     end
     #print "\n" unless @opts[:quiet]
-    tutorial << page unless page.nil?
-    tutorial
+    self << page unless page.nil?
+    self
   end
 
-  def self.from_diff(path)
+  def load_from_diff(options = {})
+    path = options[:path] || File.join(@path, "diff")
+
     step_num = 1
-    tutorial = Snaptoken::Tutorial.new
+    @pages = []
     Dir[File.join(path, "*.litdiff")].sort.each do |diff_path|
       filename = File.basename(diff_path).sub(/\.litdiff$/, "")
       page = Snaptoken::Page.new(filename)
@@ -172,10 +196,10 @@ class Snaptoken::Tutorial
           end
         end
       end
-      tutorial << page
+      self << page
     end
     #print "\n" unless @opts[:quiet]
-    tutorial
+    self
   end
 
   private
@@ -204,10 +228,10 @@ class Snaptoken::Tutorial
 
     options = {}
     options[:tree] = index.write_tree(repo)
-    if @config[:repo_author]
+    if @repo_author_name
       options[:author] = {
-        name: @config[:repo_author][:name],
-        email: @config[:repo_author][:email],
+        name: @repo_author_name,
+        email: @repo_author_email,
         time: Time.now
       }
       options[:committer] = options[:author]

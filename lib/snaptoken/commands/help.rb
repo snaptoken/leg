@@ -29,7 +29,7 @@ class Snaptoken::Commands::Help < Snaptoken::Commands::BaseCommand
       puts
       puts "For more help on a specific command, run `leg help <command>`."
     elsif cmd = Snaptoken::Commands::LIST.find { |cmd| cmd.name == @args.first }
-      cmd.new(["--help"], @config)
+      cmd.new(["--help"], @tutorial)
     else
       puts "There is no '#{@args.first}' command."
     end

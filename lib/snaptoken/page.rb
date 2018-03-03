@@ -21,31 +21,35 @@ class Snaptoken::Page
     end
   end
 
-  def to_html(template, step_template, config, pages, offline)
+  def to_html(tutorial, offline)
     content = ""
     @content.each do |step_or_text|
       case step_or_text
       when Snaptoken::Step
         step_or_text.syntax_highlight!
-        content << step_or_text.to_html(step_template, config, offline)
+        content << step_or_text.to_html(tutorial, offline)
       when String
-        content << Snaptoken::Markdown.render(step_or_text)
+        html = Snaptoken::Markdown.render(step_or_text)
+        html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
+          step = tutorial.step($1.to_i)
+          step.syntax_highlight!
+          step.to_html(tutorial, offline)
+        end
+        content << html
       else
         raise "unexpected content type"
       end
     end
 
-    page_number = pages.index(self) + 1
+    page_number = tutorial.pages.index(self) + 1
 
-    Snaptoken::Template.render_template(template,
-      config: config,
-      pages: pages,
+    Snaptoken::Template.new(tutorial.page_template, tutorial,
       offline: offline,
       title: title,
       content: content,
       page_number: page_number,
-      prev_page: page_number > 1 ? pages[page_number - 2] : nil,
-      next_page: page_number < pages.length ? pages[page_number] : nil
-    )
+      prev_page: page_number > 1 ? tutorial.pages[page_number - 2] : nil,
+      next_page: page_number < tutorial.pages.length ? tutorial.pages[page_number] : nil
+    ).render_template
   end
 end

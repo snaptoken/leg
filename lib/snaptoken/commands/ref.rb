@@ -20,10 +20,9 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    ref = @args.first
-    is_num = (ref =~ /\A\d+\z/)
+    step_number = @args.first.to_i
 
-    FileUtils.cd(@config[:path]) do
+    FileUtils.cd(@tutorial.path) do
       repo = Rugged::Repository.new("repo")
       empty_tree = Rugged::Tree.empty(repo)
 
@@ -31,22 +30,19 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
       walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
       walker.push(repo.branches.find { |b| b.name == "master" }.target)
 
-      step_num = 1
+      cur_step = 1
       walker.each do |commit|
-        commit_message = commit.message.strip
-        summary = commit_message.lines.first.strip
-        step_name = summary.split(' ').first # temporarararary
         last_commit = commit.parents.first
         diff = (last_commit || empty_tree).diff(commit)
         patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
         next if patches.empty?
 
-        if (is_num && ref.to_i == step_num) || (!is_num && ref == step_name)
+        if step_number == cur_step
           puts commit.oid
           exit
         end
 
-        step_num += 1
+        cur_step += 1
       end
 
       puts "Error: reference not found"

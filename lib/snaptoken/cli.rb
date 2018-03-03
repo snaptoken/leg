@@ -4,16 +4,18 @@ class Snaptoken::CLI
   def initialize
     initial_dir = FileUtils.pwd
 
+    @tutorial = nil
     last_dir = nil
     while FileUtils.pwd != last_dir
       if File.exist?(CONFIG_FILE)
-        @config = YAML.load(File.read(CONFIG_FILE))
-        if @config == false
+        config = YAML.load(File.read(CONFIG_FILE))
+        if config == false
           puts "Error: Invalid config file."
           exit!
         end
-        @config = {} unless @config.is_a?(Hash)
-        @config[:path] = FileUtils.pwd
+        config = {} unless config.is_a?(Hash)
+        config[:path] = FileUtils.pwd
+        @tutorial = Snaptoken::Tutorial.new(config)
         break
       end
 
@@ -34,7 +36,7 @@ class Snaptoken::CLI
     end
 
     if cmd = Snaptoken::Commands::LIST.find { |cmd| cmd.name == cmd_name }
-      cmd.new(args, @config).run
+      cmd.new(args, @tutorial).run
     else
       puts "There is no '#{cmd_name}' command. Run `leg help` for help."
     end
