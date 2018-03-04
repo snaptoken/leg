@@ -33,8 +33,8 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
     @tutorial.load_from_repo(full_diffs: true, diffs_ignore_whitespace: true)
     @tutorial.transform_diffs([
       Snaptoken::DiffTransformers::FoldSections.new([SECTION_COMMENT, SECTION_BRACES]),
-      Snaptoken::DiffTransformers::OmitAdjacentRemovals.new,
-      Snaptoken::DiffTransformers::TrimBlankLines.new
+      Snaptoken::DiffTransformers::TrimBlankLines.new,
+      Snaptoken::DiffTransformers::OmitAdjacentRemovals.new
     ])
 
     FileUtils.cd(File.join(@tutorial.path, "template")) do
