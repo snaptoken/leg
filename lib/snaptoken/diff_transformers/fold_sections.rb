@@ -46,9 +46,16 @@ class Snaptoken::DiffTransformers::FoldSections < Snaptoken::DiffTransformers::B
     sections.each.with_index do |level_sections, level|
       level_sections.each do |section|
         if !section.dirty? && !new_diff.lines[section.to_range].any?(&:nil?)
-          summary_lines = [new_diff.lines[section.start_line]]
-          summary_lines << new_diff.lines[section.end_line] if @section_types[level][:end]
-          folded_line = Snaptoken::DiffLine.new(:folded, "", summary_lines)
+          start_line = new_diff.lines[section.start_line]
+          end_line = new_diff.lines[section.end_line]
+
+          summary_lines = [start_line]
+          summary_lines << end_line if @section_types[level][:end]
+          summary = summary_lines.map(&:source).join(" … ")
+
+          line_numbers = [start_line.line_number, end_line.line_number]
+
+          folded_line = Snaptoken::DiffLine.new(:folded, summary, line_numbers)
 
           section.to_range.each do |idx|
             new_diff.lines[idx] = nil
