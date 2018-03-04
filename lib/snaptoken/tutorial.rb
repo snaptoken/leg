@@ -38,6 +38,20 @@ class Snaptoken::Tutorial
     end
   end
 
+  def transform_diffs(transformers)
+    @pages.each do |page|
+      page.content.each do |step_or_text|
+        if step_or_text.is_a? Snaptoken::Step
+          step_or_text.diffs.map! do |diff|
+            transformers.inject(diff) do |acc, transformer|
+              transformer.transform(acc)
+            end
+          end
+        end
+      end
+    end
+  end
+
   def save_to_repo(options = {})
     path = options[:path] || File.join(@path, "repo")
 

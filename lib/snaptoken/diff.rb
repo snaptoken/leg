@@ -8,6 +8,12 @@ class Snaptoken::Diff
     @syntax_highlighted = false
   end
 
+  def clone
+    diff = Snaptoken::Diff.new(@filename.dup, @is_new_file, @lines.map(&:clone))
+    diff.syntax_highlighted = @syntax_highlighted
+    diff
+  end
+
   # Append a DiffLine to the Diff.
   def <<(diff_line)
     unless diff_line.is_a? Snaptoken::DiffLine

@@ -13,6 +13,10 @@ class Snaptoken::DiffLine
     @line_numbers = line_numbers
   end
 
+  def clone
+    Snaptoken::DiffLine.new(@type, @source.dup, @line_numbers.dup)
+  end
+
   def type=(type)
     unless TYPES.include? type
       raise ArgumentError, "type must be one of: #{TYPES.inspect}"
@@ -22,6 +26,15 @@ class Snaptoken::DiffLine
 
   def blank?
     @source.strip.empty?
+  end
+
+  def line_number
+    case @type
+    when :removed, :folded
+      @line_numbers[0]
+    when :added, :unchanged
+      @line_numbers[1]
+    end
   end
 
   def to_patch(options = {})
