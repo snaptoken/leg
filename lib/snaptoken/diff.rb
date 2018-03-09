@@ -118,7 +118,7 @@ class Snaptoken::Diff
 
   def syntax_highlight!
     return if @syntax_highlighted
-    code = @lines.map(&:source).join("\n")
+    code = @lines.map(&:source).join("\n") + "\n"
     lexer = Rouge::Lexer.guess(filename: @filename, source: code)
     SYNTAX_HIGHLIGHTER.format(lexer.lex(code)).lines.each.with_index do |line_hl, idx|
       @lines[idx].source = line_hl
