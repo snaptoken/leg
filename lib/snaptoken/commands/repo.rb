@@ -1,6 +1,6 @@
-class Snaptoken::Commands::Undiff < Snaptoken::Commands::BaseCommand
+class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
   def self.name
-    "undiff"
+    "repo"
   end
 
   def self.summary
