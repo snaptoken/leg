@@ -33,6 +33,15 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
       options[:extra_path] = extra_path
     end
 
-    @tutorial.load_from_diff.save_to_repo(options)
+    @tutorial.load_from_diff do |step_num|
+      print "\r\e[K[diff/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    num_steps = @tutorial.num_steps
+    @tutorial.save_to_repo(options) do |step_num|
+      print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
   end
 end

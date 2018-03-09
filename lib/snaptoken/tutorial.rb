@@ -38,7 +38,16 @@ class Snaptoken::Tutorial
     end
   end
 
-  def transform_diffs(transformers)
+  def num_steps
+    @pages.map do |page|
+      page.content.count do |step_or_text|
+        step_or_text.is_a? Snaptoken::Step
+      end
+    end.sum
+  end
+
+  def transform_diffs(transformers, &progress_block)
+    step_num = 1
     @pages.each do |page|
       page.content.each do |step_or_text|
         if step_or_text.is_a? Snaptoken::Step
@@ -47,6 +56,8 @@ class Snaptoken::Tutorial
               transformer.transform(acc)
             end
           end
+          progress_block.(step_num) if progress_block
+          step_num += 1
         end
       end
     end
@@ -69,6 +80,7 @@ class Snaptoken::Tutorial
         page.content.each do |step_or_text|
           if step_or_text.is_a? Snaptoken::Step
             add_commit(repo, step_or_text.to_patch, step_or_text.text, step_num, counter)
+            yield step_num if block_given?
             step_num += 1
           else
             add_commit(repo, nil, step_or_text, step_num, counter)
@@ -92,6 +104,7 @@ class Snaptoken::Tutorial
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
 
+    step_num = 1
     @pages.each do |page|
       output = ""
       page.content.each do |step_or_text|
@@ -99,6 +112,9 @@ class Snaptoken::Tutorial
         if step_or_text.is_a? Snaptoken::Step
           output << step_or_text.text << "\n\n" unless step_or_text.text.empty?
           output << step_or_text.to_patch(unchanged_char: "|") << "\n"
+
+          yield step_num if block_given?
+          step_num += 1
         else
           output << step_or_text << "\n\n"
         end
@@ -152,15 +168,13 @@ class Snaptoken::Tutorial
         patch = patches.map(&:to_s).join("\n")
         step_diffs = Snaptoken::Diff.parse(patch)
 
-        #print "\r\e[K[repo/ -> build/] Step #{step_num}" unless @opts[:quiet]
-
         page ||= Snaptoken::Page.new
         page << Snaptoken::Step.new(step_num, commit_message, step_diffs)
 
+        yield step_num if block_given?
         step_num += 1
       end
     end
-    #print "\n" unless @opts[:quiet]
     self << page unless page.nil?
     self
   end
@@ -185,8 +199,8 @@ class Snaptoken::Tutorial
                 step_diffs = Snaptoken::Diff.parse(cur_diff)
                 page << Snaptoken::Step.new(step_num, cur_message, step_diffs)
 
-                #print "\r\e[K[diff/ -> repo/] Step #{step_num}" unless @opts[:quiet]
-                step_num += 1 if cur_diff
+                yield step_num if block_given?
+                step_num += 1
               end
 
               cur_message = nil
@@ -212,7 +226,6 @@ class Snaptoken::Tutorial
       end
       self << page
     end
-    #print "\n" unless @opts[:quiet]
     self
   end
 

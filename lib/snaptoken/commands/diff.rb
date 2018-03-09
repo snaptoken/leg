@@ -26,7 +26,15 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
     needs! :config, :repo
     needs! not: :diff unless @opts[:force]
 
-    @tutorial.load_from_repo.save_to_diff
+    @tutorial.load_from_repo do |step_num|
+      print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    num_steps = @tutorial.num_steps
+    @tutorial.save_to_diff do |step_num|
+      print "\r\e[K[Tutorial -> diff/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
   end
 end
-

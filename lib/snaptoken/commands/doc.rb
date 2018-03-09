@@ -30,12 +30,21 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    @tutorial.load_from_repo(full_diffs: true, diffs_ignore_whitespace: true)
+    @tutorial.load_from_repo(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
+      print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    num_steps = @tutorial.num_steps
+
     @tutorial.transform_diffs([
       Snaptoken::DiffTransformers::FoldSections.new([SECTION_COMMENT, SECTION_BRACES]),
       Snaptoken::DiffTransformers::TrimBlankLines.new,
       Snaptoken::DiffTransformers::OmitAdjacentRemovals.new
-    ])
+    ]) do |step_num|
+      print "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
 
     FileUtils.cd(File.join(@tutorial.path, "template")) do
       FileUtils.rm_rf("../build")
@@ -54,12 +63,15 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       @tutorial.step_template.gsub!(/\\\s*/, "")
 
       @tutorial.pages.each do |page|
+        print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
+
         html = page.to_html(@tutorial, false)
         File.write("../build/html/#{page.filename}.html", html)
 
         offline_html = page.to_html(@tutorial, true)
         File.write("../build/html-offline/#{page.filename}.html", offline_html)
       end
+      puts unless @opts[:quiet]
 
       Dir["*"].each do |f|
         name = File.basename(f)
