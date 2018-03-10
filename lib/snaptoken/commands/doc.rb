@@ -28,6 +28,9 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
   end
 
   def run
+    args = @opts[:quiet] ? ["--quiet"] : []
+    Snaptoken::Commands::Sync.new(args, @tutorial).run
+
     needs! :config, :repo
 
     @tutorial.load_from_repo(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|

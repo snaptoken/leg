@@ -63,6 +63,45 @@ class Snaptoken::Tutorial
     end
   end
 
+  def last_synced_at
+    if File.exist?(File.join(@path, ".last_synced"))
+      File.mtime(File.join(@path, ".last_synced"))
+    end
+  end
+
+  def diff_modified_at
+    path = File.join(@path, "diff")
+    if File.exist? path
+      Dir[File.join(path, "**/*")].map { |f| File.mtime(f) }.max
+    end
+  end
+
+  def repo_modified_at
+    path = File.join(@path, "repo")
+    if File.exist? path
+      repo = Rugged::Repository.new(path)
+      if master = repo.branches.find { |b| b.name == "master" }
+        master.target.time
+      end
+    end
+  end
+
+  def diff_modified?
+    synced_at = last_synced_at
+    modified_at = diff_modified_at
+    return false if synced_at.nil? or modified_at.nil?
+
+    modified_at > synced_at
+  end
+
+  def repo_modified?
+    synced_at = last_synced_at
+    modified_at = repo_modified_at
+    return false if synced_at.nil? or modified_at.nil?
+
+    modified_at > synced_at
+  end
+
   def save_to_repo(options = {})
     path = options[:path] || File.join(@path, "repo")
 

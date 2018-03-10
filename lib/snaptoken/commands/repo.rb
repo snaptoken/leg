@@ -24,7 +24,18 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
 
   def run
     needs! :config, :diff
-    needs! not: :repo unless @opts[:force]
+
+    unless @opts[:force]
+      if @tutorial.diff_modified? && @tutorial.repo_modified?
+        puts "Warning: Both diff/ and repo/ have been modified since they were last synced."
+        puts "Aborting. Rerun with '-f' option to force overwriting repo/."
+        exit!
+      elsif @tutorial.repo_modified?
+        puts "Warning: repo/ has been modified since last sync."
+        puts "Aborting. Rerun with '-f' option to force overwriting repo/."
+        exit!
+      end
+    end
 
     options = {}
 
@@ -43,5 +54,7 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
       print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
     end
     puts unless @opts[:quiet]
+
+    FileUtils.touch(File.join(@tutorial.path, ".last_synced"))
   end
 end
