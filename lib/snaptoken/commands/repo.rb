@@ -39,7 +39,7 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
 
     options = {}
 
-    extra_path = File.join(@tutorial.path, "repo-extra")
+    extra_path = File.join(@tutorial.config[:path], "repo-extra")
     if Dir.exist? extra_path
       options[:extra_path] = extra_path
     end
@@ -55,6 +55,6 @@ class Snaptoken::Commands::Repo < Snaptoken::Commands::BaseCommand
     end
     puts unless @opts[:quiet]
 
-    FileUtils.touch(File.join(@tutorial.path, ".last_synced"))
+    FileUtils.touch(File.join(@tutorial.config[:path], ".last_synced"))
   end
 end

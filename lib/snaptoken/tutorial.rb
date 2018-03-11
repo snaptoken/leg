@@ -1,23 +1,12 @@
 class Snaptoken::Tutorial
-  attr_accessor :path, :name, :title, :version
+  attr_accessor :config
   attr_accessor :page_template, :step_template
-  attr_accessor :repo_author_name, :repo_author_email, :syntax_theme
-
   attr_reader :pages
 
-  def initialize(c = {})
-    @path = c[:path]
-    @name = c[:name] || "untitled"
-    @title = c[:title] || "Untitled Tutorial"
-    @version = c[:version] || "1.0"
-
-    @page_template = c[:page_template] || Snaptoken::DefaultTemplates::PAGE
-    @step_template = c[:step_template] || Snaptoken::DefaultTemplates::STEP
-
-    @repo_author_name = c[:repo_author_name]
-    @repo_author_email = c[:repo_author_email]
-    @syntax_theme = c[:syntax_theme]
-
+  def initialize(config = {})
+    @config = config
+    @page_template = Snaptoken::DefaultTemplates::PAGE
+    @step_template = Snaptoken::DefaultTemplates::STEP
     @pages = []
   end
 
@@ -64,20 +53,20 @@ class Snaptoken::Tutorial
   end
 
   def last_synced_at
-    if File.exist?(File.join(@path, ".last_synced"))
-      File.mtime(File.join(@path, ".last_synced"))
+    if File.exist?(File.join(@config[:path], ".last_synced"))
+      File.mtime(File.join(@config[:path], ".last_synced"))
     end
   end
 
   def diff_modified_at
-    path = File.join(@path, "diff")
+    path = File.join(@config[:path], "diff")
     if File.exist? path
       Dir[File.join(path, "**/*")].map { |f| File.mtime(f) }.max
     end
   end
 
   def repo_modified_at
-    path = File.join(@path, "repo")
+    path = File.join(@config[:path], "repo")
     if File.exist? path
       repo = Rugged::Repository.new(path)
       if master = repo.branches.find { |b| b.name == "master" }
@@ -103,7 +92,7 @@ class Snaptoken::Tutorial
   end
 
   def save_to_repo(options = {})
-    path = options[:path] || File.join(@path, "repo")
+    path = options[:path] || File.join(@config[:path], "repo")
 
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
@@ -139,7 +128,7 @@ class Snaptoken::Tutorial
   end
 
   def save_to_diff(options = {})
-    path = options[:path] || File.join(@path, "diff")
+    path = options[:path] || File.join(@config[:path], "diff")
 
     FileUtils.rm_rf(path)
     FileUtils.mkdir(path)
@@ -172,7 +161,7 @@ class Snaptoken::Tutorial
   #   diffs_ignore_whitespace: If true, diffs don't show changes to lines when
   #     only the amount of whitespace is changed.
   def load_from_repo(options = {})
-    path = options[:path] || File.join(@path, "repo")
+    path = options[:path] || File.join(@config[:path], "repo")
 
     git_diff_options = {}
     git_diff_options[:context_lines] = 100_000 if options[:full_diffs]
@@ -191,6 +180,7 @@ class Snaptoken::Tutorial
     walker.each do |commit|
       commit_message = commit.message.strip
       next if commit_message == "-"
+      commit_message = "" if commit_message == "~"
       last_commit = commit.parents.first
       diff = (last_commit || empty_tree).diff(commit, git_diff_options)
       patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
@@ -220,7 +210,7 @@ class Snaptoken::Tutorial
   end
 
   def load_from_diff(options = {})
-    path = options[:path] || File.join(@path, "diff")
+    path = options[:path] || File.join(@config[:path], "diff")
 
     step_num = 1
     @pages = []
@@ -272,8 +262,9 @@ class Snaptoken::Tutorial
   private
 
   def add_commit(repo, diff, message, step_num, counter)
-    message ||= ""
+    message ||= "~"
     message.strip!
+    message = "~" if message.empty?
 
     if diff
       stdin = IO.popen("git apply -", "w")
@@ -295,10 +286,10 @@ class Snaptoken::Tutorial
 
     options = {}
     options[:tree] = index.write_tree(repo)
-    if @repo_author_name
+    if @config[:repo_author_name]
       options[:author] = {
-        name: @repo_author_name,
-        email: @repo_author_email,
+        name: @config[:repo_author_name],
+        email: @config[:repo_author_email],
         time: Time.now
       }
       options[:committer] = options[:author]

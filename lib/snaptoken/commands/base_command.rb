@@ -72,13 +72,13 @@ class Snaptoken::Commands::BaseCommand
         when :config
           !!@tutorial
         when :repo
-          File.exist?(File.join(@tutorial.path, "repo"))
+          File.exist?(File.join(@tutorial.config[:path], "repo"))
         when :diff
-          File.exist?(File.join(@tutorial.path, "diff"))
+          File.exist?(File.join(@tutorial.config[:path], "diff"))
         when :template
-          File.exist?(File.join(@tutorial.path, "template"))
+          File.exist?(File.join(@tutorial.config[:path], "template"))
         when :cached_diffs
-          File.exist?(File.join(@tutorial.path, ".cached-diffs"))
+          File.exist?(File.join(@tutorial.config[:path], ".cached-diffs"))
         else
           raise NotImplementedError
         end

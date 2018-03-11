@@ -9,7 +9,7 @@ class Snaptoken::Template
 
   def render_template
     b = binding
-    @params.each do |name, value|
+    @tutorial.config.merge(@params).each do |name, value|
       b.local_variable_set(name, value)
     end
     ERB.new(@template_source).result(b)
@@ -28,6 +28,10 @@ class Snaptoken::Template
     Snaptoken::Markdown.render(source)
   end
 
+  def pages
+    @tutorial.pages
+  end
+
   def step(number)
     step = @tutorial.step(number)
     step.syntax_highlight!
@@ -35,7 +39,7 @@ class Snaptoken::Template
   end
 
   def syntax_highlighting_css(scope)
-    syntax_theme = @tutorial.syntax_theme || "github"
+    syntax_theme = @tutorial.config[:syntax_theme] || "github"
     if syntax_theme.is_a? String
       theme = Rouge::Theme.find(syntax_theme)
     elsif syntax_theme.is_a? Hash

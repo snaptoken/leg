@@ -22,7 +22,7 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
 
     step_number = @args.first.to_i
 
-    FileUtils.cd(@tutorial.path) do
+    FileUtils.cd(@tutorial.config[:path]) do
       repo = Rugged::Repository.new("repo")
       empty_tree = Rugged::Tree.empty(repo)
 

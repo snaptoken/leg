@@ -28,10 +28,13 @@ class Snaptoken::Commands::Sync < Snaptoken::Commands::BaseCommand
       puts "Warning: Both diff/ and repo/ have been modified since they were last synced."
       puts "Aborting. Run `leg diff -f` or `leg repo -f` to overwrite diff/ or repo/, respectively."
       exit!
-    elsif @tutorial.diff_modified?
+    elsif @tutorial.diff_modified? or @tutorial.repo_modified_at.nil?
       Snaptoken::Commands::Repo.new(args + ["--force"], @tutorial).run
-    elsif @tutorial.repo_modified?
+    elsif @tutorial.repo_modified? or @tutorial.diff_modified_at.nil?
       Snaptoken::Commands::Diff.new(args + ["--force"], @tutorial).run
+    elsif @tutorial.last_synced_at.nil?
+      puts "Warning: There is no .last_synced file. The `sync` command won't do"
+      puts "anything until you run `leg diff` or `leg repo` for the first time."
     else
       puts "Already synced." unless @opts[:quiet]
     end

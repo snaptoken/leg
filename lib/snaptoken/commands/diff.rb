@@ -48,6 +48,6 @@ class Snaptoken::Commands::Diff < Snaptoken::Commands::BaseCommand
     end
     puts unless @opts[:quiet]
 
-    FileUtils.touch(File.join(@tutorial.path, ".last_synced"))
+    FileUtils.touch(File.join(@tutorial.config[:path], ".last_synced"))
   end
 end

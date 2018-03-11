@@ -45,7 +45,7 @@ class Snaptoken::Page
 
     Snaptoken::Template.new(tutorial.page_template, tutorial,
       offline: offline,
-      title: title,
+      page_title: title,
       content: content,
       page_number: page_number,
       prev_page: page_number > 1 ? tutorial.pages[page_number - 2] : nil,
