@@ -8,6 +8,9 @@ class Snaptoken::DiffTransformers::FoldSections < Snaptoken::DiffTransformers::B
         if line.source =~ Regexp.new(section_type[:start])
           if !section_type[:end] && cur_sections[level]
             cur_sections[level].end_line = idx - 1
+            if @options[:unfold_before_new_section]
+              cur_sections[level].dirty! if [:added, :removed].include? line.type
+            end
             sections[level] << cur_sections[level]
           end
 
