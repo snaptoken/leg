@@ -48,6 +48,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
       puts unless @opts[:quiet]
     end
 
+    FileUtils.mkdir_p(File.join(@tutorial.config[:path], "template"))
     FileUtils.cd(File.join(@tutorial.config[:path], "template")) do
       FileUtils.rm_rf("../build")
       FileUtils.mkdir_p("../build/html")

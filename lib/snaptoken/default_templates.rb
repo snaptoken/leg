@@ -5,23 +5,29 @@ module Snaptoken::DefaultTemplates
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-        <title><%= title %></title>
+        <title><%= page_number %>. <%= page_title %></title>
         <link href="style.css" rel="stylesheet">
       </head>
       <body>
         <header class="bar">
           <nav>
-            <%= prev_link %>
-            <a href="index.html">contents</a>
-            <%= next_link %>
+            <% if prev_page %>
+              <a href="<%= prev_page.filename %>.html">&larr; prev</a>
+            <% else %>
+              <a href="#"></a>
+            <% end %>
+
+            <a href="<%= pages.first.filename %>.html">beginning</a>
+
+            <% if next_page %>
+              <a href="<%= next_page.filename %>.html">next &rarr;</a>
+            <% else %>
+              <a href="#"></a>
+            <% end %>
           </nav>
         </header>
         <div id="container">
           <%= content %>
-        </div>
-        <div id="version">
-          <a href="https://github.com/snaptoken/<%= @config[:name] %>-tutorial/tree/v<%= @config[:version] %>"><%= @config[:version] %></a>
-          (<a href="https://github.com/snaptoken/<%= @config[:name] %>-tutorial/blob/master/CHANGELOG.md">changelog</a>)
         </div>
         <footer class="bar">
           <nav>
@@ -47,7 +53,7 @@ module Snaptoken::DefaultTemplates
           <% for line in diff.lines %>\\
             <% if line.type == :folded %>\\
               <div class="line folded">\\
-                <% line.line_numbers.map { |n| diff.lines[n].source }.join(" &hellip; ").gsub("\n", "") %>\\
+                <%= line.source.gsub('<span class="err">…</span>', '…') %>\\
               </div>\\
             <% else %>\\
               <% tag = {unchanged: :div, added: :ins, removed: :del}[line.type] %>\\
@@ -103,17 +109,6 @@ module Snaptoken::DefaultTemplates
       display: block;
       padding: 2px 0 4px 0;
       color: #152;
-    }
-
-    #version {
-      text-align: right;
-      font-size: 12px;
-      font-family: monospace;
-      padding-right: 5px;
-    }
-
-    #version a {
-      color: #333;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -243,47 +238,6 @@ module Snaptoken::DefaultTemplates
       font-size: 12px;
     }
 
-    .diff .diff-header a {
-      text-decoration: none;
-      color: #666;
-    }
-
-    .diff .diff-header a:hover {
-      text-decoration: underline;
-    }
-
-    .diff .step-filename a {
-      text-decoration: underline;
-    }
-
-    .diff .diff-footer {
-      background-color: #ede7e3;
-    }
-
-    .diff .diff-footer > div {
-      font-size: 12px;
-      line-height: 16px;
-      height: 16px;
-      padding-right: 5px;
-      text-align: right;
-    }
-
-    .diff .diff-tag-c0 {
-      color: #b33;
-    }
-
-    .diff .diff-tag-c1 {
-      color: #33b;
-    }
-
-    .diff .diff-tag-c2 {
-      color: #3b3;
-    }
-
-    .diff .diff-tag-c-unknown {
-      color: #a62;
-    }
-
     .diff .line {
       display: block;
       height: 20px;
@@ -301,33 +255,9 @@ module Snaptoken::DefaultTemplates
       text-decoration: none;
     }
 
-    .diff ins.line::after {
-      display: block;
-      content: '';
-      width: 20px;
-      height: 20px;
-      background-image: url('i/arrow.png');
-      background-size: 20px 20px;
-      position: absolute;
-      right: -24px;
-      top: 0;
-    }
-
     .diff del.line {
       background-color: #fdd;
       text-decoration: line-through;
-    }
-
-    .diff del.line::after {
-      display: block;
-      content: '';
-      width: 20px;
-      height: 20px;
-      background-image: url('i/x.png');
-      background-size: 20px 20px;
-      position: absolute;
-      right: -24px;
-      top: 0;
     }
 
     @media screen and (max-width: 700px) {
@@ -349,10 +279,6 @@ module Snaptoken::DefaultTemplates
 
       .diff .line {
         width: 700px;
-      }
-
-      .diff ins.line::after, .diff del.line::after {
-        display: none;
       }
     }
 
