@@ -114,7 +114,8 @@ class Snaptoken::Tutorial
       counter = 0
       step_num = 1
       pages.each do |page|
-        add_commit(repo, nil, "~~~ #{page.filename}", step_num, counter)
+        filename = page.filename.sub(/^\d+\./, "")
+        add_commit(repo, nil, "~~~ #{filename}", step_num, counter)
         counter += 1
         page.content.each do |step_or_text|
           if step_or_text.is_a? Snaptoken::Step
@@ -198,7 +199,7 @@ class Snaptoken::Tutorial
         if commit_message =~ /\A~~~ (.+)\z/
           self << page unless page.nil?
 
-          page = Snaptoken::Page.new($1)
+          page = Snaptoken::Page.new("%02d.%s" % [@pages.length + 1, $1])
         else
           page ||= Snaptoken::Page.new
           page << commit_message
@@ -223,7 +224,7 @@ class Snaptoken::Tutorial
 
     step_num = 1
     @pages = []
-    Dir[File.join(path, "*.litdiff")].sort.each do |diff_path|
+    Dir[File.join(path, "*.litdiff")].sort_by { |f| File.basename(f).to_i }.each do |diff_path|
       filename = File.basename(diff_path).sub(/\.litdiff$/, "")
       page = Snaptoken::Page.new(filename)
       File.open(diff_path, "r") do |f|
