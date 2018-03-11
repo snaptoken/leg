@@ -5,13 +5,12 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
 
   def self.summary
     "Get the commit hash in repo/ for a step\n" +
-    "name or step number. `leg <step-number>`\n" +
-    "can be used as a shortcut for\n" +
-    "`leg ref <step-number>`."
+    "number. `leg <step-number>` can be used\n" +
+    "as a shortcut for `leg ref <step-number>`."
   end
 
   def self.usage
-    "[<step-name> | <step-number>]"
+    "<step-number>"
   end
 
   def setopts!(o)
@@ -32,6 +31,7 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
 
       cur_step = 1
       walker.each do |commit|
+        next if commit.message.strip == "-"
         last_commit = commit.parents.first
         diff = (last_commit || empty_tree).diff(commit)
         patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
@@ -45,7 +45,7 @@ class Snaptoken::Commands::Ref < Snaptoken::Commands::BaseCommand
         cur_step += 1
       end
 
-      puts "Error: reference not found"
+      puts "Error: step not found"
       exit!
     end
   end
