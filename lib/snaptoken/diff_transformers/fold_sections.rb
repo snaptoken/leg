@@ -1,15 +1,11 @@
 class Snaptoken::DiffTransformers::FoldSections < Snaptoken::DiffTransformers::BaseTransformer
-  def initialize(section_types)
-    @section_types = section_types
-  end
-
   def transform(diff)
-    sections = @section_types.map { [] }
+    sections = @options[:section_types].map { [] }
 
-    cur_sections = @section_types.map { nil }
+    cur_sections = @options[:section_types].map { nil }
     diff.lines.each.with_index do |line, idx|
-      @section_types.each.with_index do |section_type, level|
-        if line.source =~ section_type[:start]
+      @options[:section_types].each.with_index do |section_type, level|
+        if line.source =~ Regexp.new(section_type[:start])
           if !section_type[:end] && cur_sections[level]
             cur_sections[level].end_line = idx - 1
             sections[level] << cur_sections[level]
@@ -20,7 +16,7 @@ class Snaptoken::DiffTransformers::FoldSections < Snaptoken::DiffTransformers::B
           if [:added, :removed].include? line.type
             cur_sections[level].dirty!
           end
-        elsif section_type[:end] && line.source =~ section_type[:end]
+        elsif section_type[:end] && line.source =~ Regexp.new(section_type[:end])
           if [:added, :removed].include? line.type
             cur_sections[level].dirty!
           end
@@ -50,7 +46,7 @@ class Snaptoken::DiffTransformers::FoldSections < Snaptoken::DiffTransformers::B
           end_line = new_diff.lines[section.end_line]
 
           summary_lines = [start_line]
-          summary_lines << end_line if @section_types[level][:end]
+          summary_lines << end_line if @options[:section_types][level][:end]
           summary = summary_lines.map(&:source).join(" … ")
 
           line_numbers = [start_line.line_number, end_line.line_number]

@@ -1,14 +1,4 @@
 class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
-  SECTION_COMMENT = {
-    start: /^\/\*\*\*.+\*\*\*\/$/,
-    end: false,
-  }
-
-  SECTION_BRACES = {
-    start: /^\S.*{$/,
-    end: /^}( \w+)?;?$/
-  }
-
   def self.name
     "doc"
   end
@@ -40,14 +30,23 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
     num_steps = @tutorial.num_steps
 
-    @tutorial.transform_diffs([
-      Snaptoken::DiffTransformers::FoldSections.new([SECTION_COMMENT, SECTION_BRACES]),
-      Snaptoken::DiffTransformers::TrimBlankLines.new,
-      Snaptoken::DiffTransformers::OmitAdjacentRemovals.new
-    ]) do |step_num|
-      print "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    if @tutorial.config[:diff_transformers]
+      transformers = @tutorial.config[:diff_transformers].map do |transformer_config|
+        if transformer_config.is_a? String
+          transformer = transformer_config
+          options = {}
+        else
+          transformer = transformer_config.keys.first
+          options = transformer_config.values.first
+        end
+        Snaptoken::DiffTransformers.const_get(transformer).new(options)
+      end
+
+      @tutorial.transform_diffs(transformers) do |step_num|
+        print "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+      end
+      puts unless @opts[:quiet]
     end
-    puts unless @opts[:quiet]
 
     FileUtils.cd(File.join(@tutorial.config[:path], "template")) do
       FileUtils.rm_rf("../build")

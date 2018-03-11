@@ -8,13 +8,14 @@ class Snaptoken::CLI
     last_dir = nil
     while FileUtils.pwd != last_dir
       if File.exist?(CONFIG_FILE)
-        config = YAML.load(File.read(CONFIG_FILE))
+        config = YAML.load_file(CONFIG_FILE)
         if config == false
           puts "Error: Invalid config file."
           exit!
         end
         config = {} unless config.is_a?(Hash)
         config[:path] = FileUtils.pwd
+        config = symbolize_keys(config)
         @tutorial = Snaptoken::Tutorial.new(config)
         break
       end
@@ -39,6 +40,21 @@ class Snaptoken::CLI
       cmd.new(args, @tutorial).run
     else
       puts "There is no '#{cmd_name}' command. Run `leg help` for help."
+    end
+  end
+
+  private
+
+  def symbolize_keys(value)
+    case value
+    when Hash
+      value.map do |k, v|
+        [k.to_sym, symbolize_keys(v)]
+      end.to_h
+    when Array
+      value.map { |v| symbolize_keys(v) }
+    else
+      value
     end
   end
 end
