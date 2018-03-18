@@ -1,7 +1,7 @@
 class Snaptoken::Page
   attr_accessor :filename, :content
 
-  def initialize(filename = nil)
+  def initialize(filename = "tutorial")
     @filename = filename
     @content = []
   end
