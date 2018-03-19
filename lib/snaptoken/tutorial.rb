@@ -53,20 +53,20 @@ class Snaptoken::Tutorial
   end
 
   def last_synced_at
-    if File.exist?(File.join(@config[:path], ".last_synced"))
-      File.mtime(File.join(@config[:path], ".last_synced"))
+    if File.exist?(File.join(@config[:path], ".leg/last_synced"))
+      File.mtime(File.join(@config[:path], ".leg/last_synced"))
     end
   end
 
   def diff_modified_at
-    path = File.join(@config[:path], "diff")
+    path = File.join(@config[:path], "doc")
     if File.exist? path
       Dir[File.join(path, "**/*")].map { |f| File.mtime(f) }.max
     end
   end
 
   def repo_modified_at
-    path = File.join(@config[:path], "repo")
+    path = File.join(@config[:path], ".leg/repo")
     if File.exist? path
       repo = Rugged::Repository.new(path)
       if master = repo.branches.find { |b| b.name == "master" }
@@ -92,10 +92,10 @@ class Snaptoken::Tutorial
   end
 
   def save_to_repo(options = {})
-    path = options[:path] || File.join(@config[:path], "repo")
+    path = options[:path] || File.join(@config[:path], ".leg/repo")
 
     FileUtils.rm_rf(path)
-    FileUtils.mkdir(path)
+    FileUtils.mkdir_p(path)
 
     FileUtils.cd(path) do
       repo = Rugged::Repository.init_at(".")
@@ -127,10 +127,10 @@ class Snaptoken::Tutorial
   end
 
   def save_to_diff(options = {})
-    path = options[:path] || File.join(@config[:path], "diff")
+    path = options[:path] || File.join(@config[:path], "doc")
 
     FileUtils.rm_rf(path)
-    FileUtils.mkdir(path)
+    FileUtils.mkdir_p(path)
 
     step_num = 1
     @pages.each.with_index do |page, page_idx|
@@ -162,7 +162,7 @@ class Snaptoken::Tutorial
   #   diffs_ignore_whitespace: If true, diffs don't show changes to lines when
   #     only the amount of whitespace is changed.
   def load_from_repo(options = {})
-    path = options[:path] || File.join(@config[:path], "repo")
+    path = options[:path] || File.join(@config[:path], ".leg/repo")
 
     git_diff_options = {}
     git_diff_options[:context_lines] = 100_000 if options[:full_diffs]
@@ -211,7 +211,7 @@ class Snaptoken::Tutorial
   end
 
   def load_from_diff(options = {})
-    path = options[:path] || File.join(@config[:path], "diff")
+    path = options[:path] || File.join(@config[:path], "doc")
 
     step_num = 1
     @pages = []

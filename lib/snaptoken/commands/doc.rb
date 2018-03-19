@@ -19,7 +19,6 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
   def run
     args = @opts[:quiet] ? ["--quiet"] : []
-    Snaptoken::Commands::Sync.new(args, @tutorial).run
 
     needs! :config, :repo
 

@@ -38,54 +38,32 @@ class Snaptoken::Commands::BaseCommand
     parser.parse("--help")
   end
 
-  ERROR_MSG = {
-    config: {
-      true: "You are not in a leg working directory.",
-      false: "You are already in a leg working directory."
-    },
-    repo: {
-      true: "There is no repo folder.",
-      false: "There is already a repo folder."
-    },
-    diff: {
-      true: "There is no diff folder.",
-      false: "There is already a diff folder."
-    },
-    template: {
-      true: "There is no template folder."
-    },
-    cached_diffs: {
-      true: "There are no cached diffs."
-    }
-  }
-
   def needs!(*whats)
-    options = whats.pop if whats.last.is_a? Hash
-    options ||= {}
-
-    yes = Array(whats).flatten.map { |w| [w, true] }
-    no = Array(options[:not]).map { |w| [w, false] }
-
-    (yes + no).each do |what, v|
-      valid =
-        case what
-        when :config
-          !!@tutorial
-        when :repo
-          File.exist?(File.join(@tutorial.config[:path], "repo"))
-        when :diff
-          File.exist?(File.join(@tutorial.config[:path], "diff"))
-        when :template
-          File.exist?(File.join(@tutorial.config[:path], "template"))
-        when :cached_diffs
-          File.exist?(File.join(@tutorial.config[:path], ".cached-diffs"))
-        else
-          raise NotImplementedError
+    whats.each do |what|
+      case what
+      when :config
+        if @tutorial.nil?
+          puts "Error: You are not in a leg working directory."
+          exit 1
         end
+      when :repo
+        if @tutorial.diff_modified? and @tutorial.repo_modified?
+          puts "Error: doc/ and .leg/repo have diverged!"
+          exit 1
+        elsif @tutorial.diff_modified? or @tutorial.repo_modified_at.nil?
+          @tutorial.load_from_diff do |step_num|
+            print "\r\e[K[doc/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+          end
+          puts unless @opts[:quiet]
 
-      if valid != v
-        puts "Error: " + ERROR_MSG[what][v.to_s.to_sym]
-        exit!
+          num_steps = @tutorial.num_steps
+          @tutorial.save_to_repo do |step_num|
+            print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+          end
+          puts unless @opts[:quiet]
+
+          FileUtils.touch(File.join(@tutorial.config[:path], ".leg/last_synced"))
+        end
       end
     end
   end
