@@ -33,7 +33,7 @@ class Snaptoken::CLI
 
     if cmd_name =~ /\A\d+\z/
       args.unshift(cmd_name)
-      cmd_name = "ref"
+      cmd_name = "step"
     end
 
     if cmd = Snaptoken::Commands::LIST.find { |cmd| cmd.name == cmd_name }
