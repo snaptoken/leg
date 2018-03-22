@@ -166,9 +166,8 @@ Let's try something a little more challenging. Let's say we want to rewrite our
 steps to use a `for` loop instead of a `while` loop. That means going back and
 amending the first step of our tutorial.
 
-We can do that by running `leg goto 1` to checkout the first step of the
-tutorial into the `step/` folder. Then modify `step/fizzbuzz.js` to look like
-this:
+We can do that by running `leg 1` to checkout the first step of the tutorial
+into the `step/` folder. Then modify `step/fizzbuzz.js` to look like this:
 
 ```js
 for (var n = 1; n <= 100; n++) {
@@ -202,12 +201,12 @@ When the conflict is resolved and you've saved `step/fizzbuzz.js`, run
 
 So far, whenever we've run `leg commit` we've been adding steps to the end of
 our tutorial. We can also insert commits in the middle of our tutorial by
-running `leg goto <step-number>`, making changes, and running `leg commit`.
-This will add step(s) *after* the given `<step-number>`.
+running `leg <step-number>`, making changes, and running `leg commit`. This
+will add step(s) *after* the given `<step-number>`.
 
 For example, let's add a step after step 1 that prints out a welcome message at
-the beginning of the program. First, run `leg goto 1`. This checks out step 1
-into the `step/` folder. Now modify `step/fizzbuzz.js` thusly:
+the beginning of the program. First, run `leg 1`. This checks out step 1 into
+the `step/` folder. Now modify `step/fizzbuzz.js` thusly:
 
 ```js
 console.log("Welcome to fizzbuzz!");
