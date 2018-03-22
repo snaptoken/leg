@@ -91,6 +91,36 @@ class Snaptoken::Tutorial
     modified_at > synced_at
   end
 
+  def copy_repo_to_step!
+    step_dir = File.join(@config[:path], "step")
+    FileUtils.mkdir_p(step_dir)
+    FileUtils.rm_rf(File.join(step_dir, "."), secure: true)
+    FileUtils.cd(File.join(@config[:path], ".leg/repo")) do
+      files = Dir.glob("*", File::FNM_DOTMATCH) - [".", "..", ".git", ".dummyleg"]
+      files.each do |f|
+        FileUtils.cp_r(f, File.join(step_dir, f))
+      end
+    end
+  end
+
+  def copy_step_to_repo!
+    FileUtils.mv(
+      File.join(@config[:path], ".leg/repo/.git"),
+      File.join(@config[:path], ".leg/.gittemp")
+    )
+    FileUtils.rm_rf(File.join(@config[:path], ".leg/repo/."), secure: true)
+    FileUtils.mv(
+      File.join(@config[:path], ".leg/.gittemp"),
+      File.join(@config[:path], ".leg/repo/.git")
+    )
+    FileUtils.cd(File.join(@config[:path], "step")) do
+      files = Dir.glob("*", File::FNM_DOTMATCH) - [".", ".."]
+      files.each do |f|
+        FileUtils.cp_r(f, File.join(@config[:path], ".leg/repo", f))
+      end
+    end
+  end
+
   def save_to_repo(options = {})
     path = options[:path] || File.join(@config[:path], ".leg/repo")
 

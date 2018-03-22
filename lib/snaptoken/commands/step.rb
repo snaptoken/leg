@@ -37,14 +37,7 @@ class Snaptoken::Commands::Step < Snaptoken::Commands::BaseCommand
 
         if step_number == cur_step
           `git checkout #{commit.oid}`
-
-          step_dir = File.join(@tutorial.config[:path], "step")
-          FileUtils.mkdir_p(step_dir)
-          FileUtils.rm_rf(File.join(step_dir, "."))
-          files = Dir.glob("*", File::FNM_DOTMATCH) - [".", "..", ".git", ".dummyleg"]
-          files.each do |f|
-            FileUtils.cp_r(f, File.join(@tutorial.config[:path], "step", f))
-          end
+          @tutorial.copy_repo_to_step!
           exit
         end
 
