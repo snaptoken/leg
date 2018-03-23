@@ -32,7 +32,7 @@ class Snaptoken::Commands::Step < Snaptoken::Commands::BaseCommand
         next if commit.message.strip == "-"
         last_commit = commit.parents.first
         diff = (last_commit || empty_tree).diff(commit)
-        patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
+        patches = diff.each_patch.to_a
         next if patches.empty?
 
         if step_number == cur_step

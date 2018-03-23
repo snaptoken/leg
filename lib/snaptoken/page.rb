@@ -1,44 +1,53 @@
 class Snaptoken::Page
-  attr_accessor :filename, :content
+  attr_accessor :filename, :steps, :footer_text
 
   def initialize(filename = "tutorial")
     @filename = filename
-    @content = []
+    @steps = []
+    @footer_text = nil
   end
 
-  def <<(step_or_text)
-    @content << step_or_text
+  def <<(step)
+    @steps << step
     self
   end
 
   def empty?
-    @content.empty?
+    @steps.empty?
   end
 
   def title
-    if @content.first.is_a?(String) && @content.first.lines.first.start_with?("# ")
-      @content.first.lines.first[2..-1].strip
+    first_line = @steps.first ? @steps.first.text.lines.first : (@footer_text ? @footer_text.lines.first : nil)
+    if first_line && first_line.start_with?("# ")
+      first_line[2..-1].strip
     end
   end
 
   def to_html(tutorial, offline)
     content = ""
-    @content.each do |step_or_text|
-      case step_or_text
-      when Snaptoken::Step
-        step_or_text.syntax_highlight!
-        content << step_or_text.to_html(tutorial, offline)
-      when String
-        html = Snaptoken::Markdown.render(step_or_text)
+    @steps.each do |step|
+      if !step.text.strip.empty?
+        html = Snaptoken::Markdown.render(step.text)
         html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
           step = tutorial.step($1.to_i)
           step.syntax_highlight!
           step.to_html(tutorial, offline)
         end
         content << html
-      else
-        raise "unexpected content type"
       end
+
+      step.syntax_highlight!
+      content << step.to_html(tutorial, offline)
+    end
+    if @footer_text
+      # TODO: DRY this up. Please.
+      html = Snaptoken::Markdown.render(@footer_text)
+      html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
+        step = tutorial.step($1.to_i)
+        step.syntax_highlight!
+        step.to_html(tutorial, offline)
+      end
+      content << html
     end
 
     page_number = tutorial.pages.index(self) + 1

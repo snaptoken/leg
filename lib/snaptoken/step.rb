@@ -1,22 +1,18 @@
 class Snaptoken::Step
-  attr_accessor :number, :text, :diffs
+  attr_accessor :number, :summary, :text, :diffs
 
-  def initialize(number, text, diffs)
+  def initialize(number, summary, text, diffs)
     @number = number
+    @summary = summary.strip
     @text = text.strip
     @diffs = diffs
   end
 
   def to_html(tutorial, offline)
-    summary = (@text.lines.first || "").strip
-    text_after_summary = (@text.lines[1..-1] || []).join.strip
-
     Snaptoken::Template.new(tutorial.step_template, tutorial,
       offline: offline,
       number: @number,
-      summary: summary,
-      text: text_after_summary,
-      full_text: @text,
+      summary: @summary,
       diffs: @diffs
     ).render_template
   end

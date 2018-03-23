@@ -18,36 +18,28 @@ class Snaptoken::Tutorial
   def step(number)
     cur = 1
     @pages.each do |page|
-      page.content.each do |step_or_text|
-        if step_or_text.is_a? Snaptoken::Step
-          return step_or_text if cur == number
-          cur += 1
-        end
+      page.steps.each do |step|
+        return step if cur == number
+        cur += 1
       end
     end
   end
 
   def num_steps
-    @pages.map do |page|
-      page.content.count do |step_or_text|
-        step_or_text.is_a? Snaptoken::Step
-      end
-    end.sum
+    @pages.map(&:steps).map(&:length).sum
   end
 
   def transform_diffs(transformers, &progress_block)
     step_num = 1
     @pages.each do |page|
-      page.content.each do |step_or_text|
-        if step_or_text.is_a? Snaptoken::Step
-          step_or_text.diffs.map! do |diff|
-            transformers.inject(diff) do |acc, transformer|
-              transformer.transform(acc)
-            end
+      page.steps.each do |step|
+        step.diffs.map! do |diff|
+          transformers.inject(diff) do |acc, transformer|
+            transformer.transform(acc)
           end
-          progress_block.(step_num) if progress_block
-          step_num += 1
         end
+        progress_block.(step_num) if progress_block
+        step_num += 1
       end
     end
   end
@@ -96,7 +88,7 @@ class Snaptoken::Tutorial
     FileUtils.mkdir_p(step_dir)
     FileUtils.rm_rf(File.join(step_dir, "."), secure: true)
     FileUtils.cd(File.join(@config[:path], ".leg/repo")) do
-      files = Dir.glob("*", File::FNM_DOTMATCH) - [".", "..", ".git", ".dummyleg"]
+      files = Dir.glob("*", File::FNM_DOTMATCH) - [".", "..", ".git"]
       files.each do |f|
         FileUtils.cp_r(f, File.join(step_dir, f))
       end
@@ -130,27 +122,24 @@ class Snaptoken::Tutorial
     FileUtils.cd(path) do
       repo = Rugged::Repository.init_at(".")
 
-      counter = 0
       step_num = 1
       pages.each do |page|
-        add_commit(repo, nil, "~~~ #{page.filename}", step_num, counter)
-        counter += 1
-        page.content.each do |step_or_text|
-          if step_or_text.is_a? Snaptoken::Step
-            add_commit(repo, step_or_text.to_patch, step_or_text.text, step_num, counter)
-            yield step_num if block_given?
-            step_num += 1
-          else
-            add_commit(repo, nil, step_or_text, step_num, counter)
-          end
-          counter += 1
+        message = "~~~ #{page.filename}"
+        message << "\n\n#{page.footer_text}" if page.footer_text
+        add_commit(repo, nil, message, step_num)
+        page.steps.each do |step|
+          message = "#{step.summary}\n\n#{step.text}".strip
+          add_commit(repo, step.to_patch, message, step_num)
+
+          yield step_num if block_given?
+          step_num += 1
         end
       end
 
-      if options[:extra_path]
-        FileUtils.cp_r(File.join(options[:extra_path], "."), ".")
-        add_commit(repo, nil, "-", step_num, counter)
-      end
+      #if options[:extra_path]
+      #  FileUtils.cp_r(File.join(options[:extra_path], "."), ".")
+      #  add_commit(repo, nil, "-", step_num, counter)
+      #end
 
       repo.checkout_head(strategy: :force)
     end
@@ -165,18 +154,15 @@ class Snaptoken::Tutorial
     step_num = 1
     @pages.each.with_index do |page, page_idx|
       output = ""
-      page.content.each do |step_or_text|
-        output << "~~~\n\n" unless output.empty?
-        if step_or_text.is_a? Snaptoken::Step
-          output << step_or_text.text << "\n\n" unless step_or_text.text.empty?
-          output << step_or_text.to_patch(unchanged_char: "|") << "\n"
+      page.steps.each do |step|
+        output << step.text << "\n\n" unless step.text.empty?
+        output << "~~~ #{step.summary}\n"
+        output << step.to_patch(unchanged_char: "|") << "\n"
 
-          yield step_num if block_given?
-          step_num += 1
-        else
-          output << step_or_text << "\n\n"
-        end
+        yield step_num if block_given?
+        step_num += 1
       end
+      output << page.footer_text if page.footer_text
       output.chomp!
 
       filename = page.filename + ".litdiff"
@@ -210,27 +196,29 @@ class Snaptoken::Tutorial
     @pages = []
     walker.each do |commit|
       commit_message = commit.message.strip
+      summary = commit_message.lines.first.strip
+      text = (commit_message.lines[2..-1] || []).join.strip
       next if commit_message == "-"
       commit_message = "" if commit_message == "~"
       last_commit = commit.parents.first
       diff = (last_commit || empty_tree).diff(commit, git_diff_options)
-      patches = diff.each_patch.reject { |p| p.delta.new_file[:path] == ".dummyleg" }
+      patches = diff.each_patch.to_a
 
       if patches.empty?
-        if commit_message =~ /\A~~~ (.+)\z/
+        if summary =~ /^~~~ (.+)$/
           self << page unless page.nil?
 
           page = Snaptoken::Page.new($1)
+          page.footer_text = text unless text.empty?
         else
-          page ||= Snaptoken::Page.new
-          page << commit_message
+          puts "Warning: ignoring empty commit."
         end
       else
         patch = patches.map(&:to_s).join("\n")
         step_diffs = Snaptoken::Diff.parse(patch)
 
         page ||= Snaptoken::Page.new
-        page << Snaptoken::Step.new(step_num, commit_message, step_diffs)
+        page << Snaptoken::Step.new(step_num, summary, text, step_diffs)
 
         yield step_num if block_given?
         step_num += 1
@@ -249,40 +237,36 @@ class Snaptoken::Tutorial
       filename = File.basename(diff_path).sub(/\.litdiff$/, "").sub(/^\d+\./, "")
       page = Snaptoken::Page.new(filename)
       File.open(diff_path, "r") do |f|
-        cur_message = nil
+        cur_text = ""
         cur_diff = nil
+        cur_summary = nil
         while line = f.gets
-          if line.strip == "~~~"
-            if cur_message || cur_diff
-              if !cur_diff
-                page << cur_message
-              else
-                step_diffs = Snaptoken::Diff.parse(cur_diff)
-                page << Snaptoken::Step.new(step_num, cur_message, step_diffs)
-
-                yield step_num if block_given?
-                step_num += 1
-              end
-
-              cur_message = nil
-              cur_diff = nil
-            end
+          if line.start_with? "~~~"
+            cur_summary = (line[3..-1] || "").strip
+            cur_diff = ""
           elsif cur_diff
-            cur_diff << line.sub(/^\|/, " ")
-          elsif line =~ /^diff --git/
-            cur_diff = line
+            if line.chomp.empty?
+              step_diffs = Snaptoken::Diff.parse(cur_diff)
+              page << Snaptoken::Step.new(step_num, cur_summary, cur_text.strip, step_diffs)
+
+              yield step_num if block_given?
+              step_num += 1
+
+              cur_text = ""
+              cur_summary = nil
+              cur_diff = nil
+            else
+              cur_diff << line.sub(/^\|/, " ")
+            end
           else
-            cur_message ||= ""
-            cur_message << line
+            cur_text << line
           end
         end
-        if cur_message || cur_diff
-          if !cur_diff
-            page << cur_message
-          else
-            step_diffs = Snaptoken::Diff.parse(cur_diff)
-            page << Snaptoken::Step.new(step_num, cur_message, step_diffs)
-          end
+        if cur_diff
+          step_diffs = Snaptoken::Diff.parse(cur_diff)
+          page << Snaptoken::Step.new(step_num, cur_summary, cur_text.strip, step_diffs)
+        elsif !cur_text.strip.empty?
+          page.footer_text = cur_text.strip
         end
       end
       self << page
@@ -292,7 +276,7 @@ class Snaptoken::Tutorial
 
   private
 
-  def add_commit(repo, diff, message, step_num, counter)
+  def add_commit(repo, diff, message, step_num)
     message ||= "~"
     message.strip!
     message = "~" if message.empty?
@@ -306,9 +290,7 @@ class Snaptoken::Tutorial
     index = repo.index
     index.read_tree(repo.head.target.tree) unless repo.empty?
 
-    File.write(".dummyleg", counter)
-
-    (Dir["**/*"] + [".dummyleg"]).each do |path|
+    Dir["**/*"].each do |path|
       unless File.directory?(path)
         oid = repo.write(File.read(path), :blob)
         index.add(path: path, oid: oid, mode: 0100644)
