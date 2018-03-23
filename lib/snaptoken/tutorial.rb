@@ -162,8 +162,7 @@ class Snaptoken::Tutorial
         yield step_num if block_given?
         step_num += 1
       end
-      output << page.footer_text if page.footer_text
-      output.chomp!
+      output << page.footer_text << "\n" if page.footer_text
 
       filename = page.filename + ".litdiff"
       filename = "%02d.%s" % [page_idx + 1, filename] if @pages.length > 1
