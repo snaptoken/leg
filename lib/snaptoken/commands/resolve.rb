@@ -24,7 +24,6 @@ class Snaptoken::Commands::Resolve < Snaptoken::Commands::BaseCommand
 
     FileUtils.cd(File.join(@tutorial.config[:path], ".leg/repo")) do
       `git add -A`
-
       `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue`
 
       remaining_commits.each.with_index do |commit, commit_idx|
@@ -39,7 +38,6 @@ class Snaptoken::Commands::Resolve < Snaptoken::Commands::BaseCommand
           )
 
           puts "Looks like you have a conflict to resolve!"
-
           exit
         end
       end

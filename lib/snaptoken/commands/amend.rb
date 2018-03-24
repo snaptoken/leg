@@ -1,10 +1,10 @@
-class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
+class Snaptoken::Commands::Amend < Snaptoken::Commands::BaseCommand
   def self.name
-    "commit"
+    "amend"
   end
 
   def self.summary
-    "Append or insert a new step."
+    "Modify a step."
   end
 
   def self.usage
@@ -33,7 +33,7 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
 
     FileUtils.cd(File.join(@tutorial.config[:path], ".leg/repo")) do
       `git add -A`
-      `git commit -m"TODO: let user specify commit message"`
+      `git commit --amend -m"TODO: let user specify commit message"`
 
       remaining_commits.each.with_index do |commit, commit_idx|
         `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
