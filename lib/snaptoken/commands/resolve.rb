@@ -17,25 +17,19 @@ class Snaptoken::Commands::Resolve < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    remaining_commits = File.read(File.join(@tutorial.config[:path], ".leg/remaining_commits"))
-    remaining_commits = remaining_commits.lines.map(&:strip).reject(&:empty?)
-
     @git.copy_step_to_repo!
 
     FileUtils.cd(@git.repo_path) do
       `git add -A`
       `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue`
 
-      remaining_commits.each.with_index do |commit, commit_idx|
+      commits = @git.remaining_commits
+      commits.each.with_index do |commit, commit_idx|
         `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
 
         if not $?.success?
           @git.copy_repo_to_step!
-
-          File.write(
-            "../remaining_commits",
-            remaining_commits[(commit_idx+1)..-1].join("\n")
-          )
+          @git.remaining_commits = commits[(commit_idx+1)..-1]
 
           puts "Looks like you have a conflict to resolve!"
           exit
@@ -48,7 +42,7 @@ class Snaptoken::Commands::Resolve < Snaptoken::Commands::BaseCommand
 
       git_to_litdiff!
 
-      FileUtils.rm_f("../remaining_commits")
+      @git.remaining_commits = nil
 
       puts "Success!"
     end

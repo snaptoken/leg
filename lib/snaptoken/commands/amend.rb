@@ -24,9 +24,9 @@ class Snaptoken::Commands::Amend < Snaptoken::Commands::BaseCommand
     if master_commit.oid != repo.head.target_id
       walker.push(master_commit)
       walker.hide(repo.head.target)
-      remaining_commits = walker.to_a.map(&:oid)
+      commits = walker.to_a.map(&:oid)
     else
-      remaining_commits = []
+      commits = []
     end
 
     @git.copy_step_to_repo!
@@ -35,16 +35,12 @@ class Snaptoken::Commands::Amend < Snaptoken::Commands::BaseCommand
       `git add -A`
       `git commit --amend -m"TODO: let user specify commit message"`
 
-      remaining_commits.each.with_index do |commit, commit_idx|
+      commits.each.with_index do |commit, commit_idx|
         `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
 
         if not $?.success?
           @git.copy_repo_to_step!
-
-          File.write(
-            "../remaining_commits",
-            remaining_commits[(commit_idx+1)..-1].join("\n")
-          )
+          @git.remaining_commits = commits[(commit_idx+1)..-1]
 
           puts "Looks like you have a conflict to resolve!"
           exit
@@ -56,7 +52,7 @@ class Snaptoken::Commands::Amend < Snaptoken::Commands::BaseCommand
 
       git_to_litdiff!
 
-      FileUtils.rm_f("../remaining_commits")
+      @git.remaining_commits = nil
 
       puts "Success!"
     end

@@ -116,11 +116,31 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
     File.join(@tutorial.config[:path], ".leg/repo")
   end
 
+  def remaining_commits
+    if File.exist?(remaining_commits_path)
+      File.readlines(remaining_commits_path).map(&:strip).reject(&:empty?)
+    else
+      []
+    end
+  end
+
+  def remaining_commits=(commits)
+    if commits && !commits.empty?
+      File.write(remaining_commits_path, commits.join("\n"))
+    else
+      FileUtils.rm_f(remaining_commits_path)
+    end
+  end
+
+  private
+
   def step_path
     File.join(@tutorial.config[:path], "step")
   end
 
-  private
+  def remaining_commits_path
+    File.join(@tutorial.config[:path], ".leg/remaining_commits")
+  end
 
   def modified_at
     if File.exist? repo_path
