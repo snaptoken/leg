@@ -1,6 +1,6 @@
-class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
+class Snaptoken::Commands::Build < Snaptoken::Commands::BaseCommand
   def self.name
-    "doc"
+    "build"
   end
 
   def self.summary
