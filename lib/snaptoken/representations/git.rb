@@ -39,26 +39,9 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
     git_diff_options[:context_lines] = 100_000 if options[:full_diffs]
     git_diff_options[:ignore_whitespace_change] = true if options[:diffs_ignore_whitespace]
 
-    repo = Rugged::Repository.new(repo_path)
-    empty_tree = Rugged::Tree.empty(repo)
-
-    walker = Rugged::Walker.new(repo)
-    walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
-    walker.push(repo.branches.find { |b| b.name == "master" }.target)
-
-    step_num = 1
     page = nil
     @tutorial.clear
-    walker.each do |commit|
-      commit_message = commit.message.strip
-      summary = commit_message.lines.first.strip
-      text = (commit_message.lines[2..-1] || []).join.strip
-      next if commit_message == "-"
-      commit_message = "" if commit_message == "~"
-      last_commit = commit.parents.first
-      diff = (last_commit || empty_tree).diff(commit, git_diff_options)
-      patches = diff.each_patch.to_a
-
+    each_step(git_diff_options) do |step_num, commit, summary, text, patches|
       if patches.empty?
         if summary =~ /^~~~ (.+)$/
           @tutorial << page unless page.nil?
@@ -76,7 +59,6 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
         page << Snaptoken::Step.new(step_num, summary, text, step_diffs)
 
         yield step_num if block_given?
-        step_num += 1
       end
     end
     @tutorial << page unless page.nil?
@@ -114,6 +96,51 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
 
   def repo_path
     File.join(@tutorial.config[:path], ".leg/repo")
+  end
+
+  def repo
+    @repo ||= Rugged::Repository.new(repo_path)
+  end
+
+  def each_commit(options = {})
+    walker = Rugged::Walker.new(repo)
+    walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
+
+    master_commit = repo.branches["master"].target
+    walker.push(master_commit)
+
+    return [] if master_commit.oid == options[:after]
+    walker.hide(options[:after]) if options[:after]
+
+    return walker.to_a if not block_given?
+
+    walker.each do |commit|
+      yield commit
+    end
+  end
+
+  alias_method :commits, :each_commit
+
+  def each_step(git_diff_options = {})
+    empty_tree = Rugged::Tree.empty(repo)
+    step_num = 1
+    each_commit do |commit|
+      commit_message = commit.message.strip
+      summary = commit_message.lines.first.strip
+      text = (commit_message.lines[2..-1] || []).join.strip
+      next if commit_message == "-"
+      commit_message = "" if commit_message == "~"
+      last_commit = commit.parents.first
+      diff = (last_commit || empty_tree).diff(commit, git_diff_options)
+      patches = diff.each_patch.to_a
+
+      if patches.empty?
+        yield nil, commit, summary, text, patches
+      else
+        yield step_num, commit, summary, text, patches
+        step_num += 1
+      end
+    end
   end
 
   def remaining_commits

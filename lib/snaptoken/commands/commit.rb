@@ -17,17 +17,7 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    repo = Rugged::Repository::new(@git.repo_path)
-    walker = Rugged::Walker.new(repo)
-    walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
-    master_commit = repo.branches["master"].target
-    if master_commit.oid != repo.head.target_id
-      walker.push(master_commit)
-      walker.hide(repo.head.target)
-      commits = walker.to_a.map(&:oid)
-    else
-      commits = []
-    end
+    commits = @git.commits(after: @git.repo.head.target).map(&:oid)
 
     @git.copy_step_to_repo!
 
@@ -47,8 +37,8 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
         end
       end
 
-      repo.references.update(repo.branches["master"], repo.head.target_id)
-      repo.head = "refs/heads/master"
+      @git.repo.references.update(@git.repo.branches["master"], @git.repo.head.target_id)
+      @git.repo.head = "refs/heads/master"
 
       git_to_litdiff!
 

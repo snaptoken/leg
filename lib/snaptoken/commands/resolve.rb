@@ -36,9 +36,8 @@ class Snaptoken::Commands::Resolve < Snaptoken::Commands::BaseCommand
         end
       end
 
-      repo = Rugged::Repository::new(@git.repo_path)
-      repo.references.update(repo.branches["master"], repo.head.target_id)
-      repo.head = "refs/heads/master"
+      @git.repo.references.update(@git.repo.branches["master"], @git.repo.head.target_id)
+      @git.repo.head = "refs/heads/master"
 
       git_to_litdiff!
 
