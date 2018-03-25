@@ -143,20 +143,44 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
     end
   end
 
-  def remaining_commits
-    if File.exist?(remaining_commits_path)
-      File.readlines(remaining_commits_path).map(&:strip).reject(&:empty?)
-    else
-      []
+  def commit!(options = {})
+    copy_step_to_repo!
+    remaining_commits = commits(after: repo.head.target).map(&:oid)
+    FileUtils.cd(repo_path) do
+      `git add -A`
+      `git commit #{'--amend' if options[:amend]} -m"TODO: let user specify commit message"`
     end
+    rebase!(remaining_commits)
   end
 
-  def remaining_commits=(commits)
-    if commits && !commits.empty?
-      File.write(remaining_commits_path, commits.join("\n"))
-    else
-      FileUtils.rm_f(remaining_commits_path)
+  def resolve!
+    copy_step_to_repo!
+    FileUtils.cd(repo_path) do
+      `git add -A`
+      `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue`
     end
+    rebase!(load_remaining_commits)
+  end
+
+  def rebase!(remaining_commits)
+    FileUtils.cd(repo_path) do
+      remaining_commits.each.with_index do |commit, commit_idx|
+        `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
+
+        if not $?.success?
+          copy_repo_to_step!
+          save_remaining_commits(remaining_commits[(commit_idx+1)..-1])
+          return false
+        end
+      end
+    end
+
+    save_remaining_commits(nil)
+
+    repo.references.update(repo.branches["master"], repo.head.target_id)
+    repo.head = "refs/heads/master"
+
+    true
   end
 
   private
@@ -175,6 +199,22 @@ class Snaptoken::Representations::Git < Snaptoken::Representations::BaseRepresen
       if master = repo.branches.find { |b| b.name == "master" }
         master.target.time
       end
+    end
+  end
+
+  def load_remaining_commits
+    if File.exist?(remaining_commits_path)
+      File.readlines(remaining_commits_path).map(&:strip).reject(&:empty?)
+    else
+      []
+    end
+  end
+
+  def save_remaining_commits(remaining_commits)
+    if remaining_commits && !remaining_commits.empty?
+      File.write(remaining_commits_path, remaining_commits.join("\n"))
+    else
+      FileUtils.rm_f(remaining_commits_path)
     end
   end
 
