@@ -17,7 +17,7 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
   def run
     needs! :config, :repo
 
-    repo = Rugged::Repository::new(File.join(@tutorial.config[:path], ".leg/repo"))
+    repo = Rugged::Repository::new(@git.repo_path)
     walker = Rugged::Walker.new(repo)
     walker.sorting(Rugged::SORT_TOPO | Rugged::SORT_REVERSE)
     master_commit = repo.branches["master"].target
@@ -29,9 +29,9 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
       remaining_commits = []
     end
 
-    @tutorial.copy_step_to_repo!
+    @git.copy_step_to_repo!
 
-    FileUtils.cd(File.join(@tutorial.config[:path], ".leg/repo")) do
+    FileUtils.cd(@git.repo_path) do
       `git add -A`
       `git commit -m"TODO: let user specify commit message"`
 
@@ -39,10 +39,10 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
         `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
 
         if not $?.success?
-          @tutorial.copy_repo_to_step!
+          @git.copy_repo_to_step!
 
           File.write(
-            File.join(@tutorial.config[:path], ".leg/remaining_commits"),
+            "../remaining_commits",
             remaining_commits[(commit_idx+1)..-1].join("\n")
           )
 
@@ -54,8 +54,7 @@ class Snaptoken::Commands::Commit < Snaptoken::Commands::BaseCommand
       repo.references.update(repo.branches["master"], repo.head.target_id)
       repo.head = "refs/heads/master"
 
-      @tutorial.load_from_repo.save_to_diff
-      FileUtils.touch(File.join(@tutorial.config[:path], ".leg/last_synced"))
+      git_to_litdiff!
 
       FileUtils.rm_f("../remaining_commits")
 

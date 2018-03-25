@@ -4,6 +4,8 @@ class Snaptoken::Commands::BaseCommand
   def initialize(args, tutorial)
     @args = args
     @tutorial = tutorial
+    @git = Snaptoken::Representations::Git.new(@tutorial)
+    @litdiff = Snaptoken::Representations::Litdiff.new(@tutorial)
     parseopts!
   end
 
@@ -47,25 +49,44 @@ class Snaptoken::Commands::BaseCommand
           exit 1
         end
       when :repo
-        if @tutorial.diff_modified? and @tutorial.repo_modified?
+        if @litdiff.modified? and @git.modified?
           puts "Error: doc/ and .leg/repo have diverged!"
           exit 1
-        elsif @tutorial.diff_modified? or @tutorial.repo_modified_at.nil?
-          @tutorial.load_from_diff do |step_num|
-            print "\r\e[K[doc/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
-          end
-          puts unless @opts[:quiet]
-
-          num_steps = @tutorial.num_steps
-          @tutorial.save_to_repo do |step_num|
-            print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
-          end
-          puts unless @opts[:quiet]
-
-          FileUtils.touch(File.join(@tutorial.config[:path], ".leg/last_synced"))
+        elsif @litdiff.modified? or !@git.exists?
+          litdiff_to_git!
         end
       end
     end
+  end
+
+  def git_to_litdiff!
+    @git.load! do |step_num|
+      print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    num_steps = @tutorial.num_steps
+    @litdiff.save! do |step_num|
+      print "\r\e[K[Tutorial -> doc/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    @tutorial.synced!
+  end
+
+  def litdiff_to_git!
+    @litdiff.load! do |step_num|
+      print "\r\e[K[doc/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    num_steps = @tutorial.num_steps
+    @git.save! do |step_num|
+      print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+    end
+    puts unless @opts[:quiet]
+
+    @tutorial.synced!
   end
 end
 

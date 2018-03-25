@@ -19,7 +19,7 @@ class Snaptoken::Commands::Step < Snaptoken::Commands::BaseCommand
 
     step_number = @args.first.to_i
 
-    FileUtils.cd(File.join(@tutorial.config[:path], ".leg/repo")) do
+    FileUtils.cd(@git.repo_path) do
       repo = Rugged::Repository.new(".")
       empty_tree = Rugged::Tree.empty(repo)
 
@@ -37,7 +37,7 @@ class Snaptoken::Commands::Step < Snaptoken::Commands::BaseCommand
 
         if step_number == cur_step
           `git checkout #{commit.oid}`
-          @tutorial.copy_repo_to_step!
+          @git.copy_repo_to_step!
           exit
         end
 

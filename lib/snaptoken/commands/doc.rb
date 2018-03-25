@@ -22,7 +22,7 @@ class Snaptoken::Commands::Doc < Snaptoken::Commands::BaseCommand
 
     needs! :config, :repo
 
-    @tutorial.load_from_repo(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
+    @git.load!(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
       print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
     end
     puts unless @opts[:quiet]
