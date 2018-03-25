@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    oleg (0.6.0)
+    leg (0.0.1)
       redcarpet (= 3.4.0)
       rouge (= 2.0.7)
       rugged (= 0.25.1.1)
@@ -17,7 +17,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  oleg!
+  leg!
 
 BUNDLED WITH
-   1.14.4
+   1.16.1
