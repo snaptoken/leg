@@ -150,7 +150,12 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
       `git add -A`
       `git commit #{'--amend' if options[:amend]} -m"TODO: let user specify commit message"`
     end
-    rebase!(remaining_commits)
+    if options[:no_rebase]
+      save_remaining_commits(remaining_commits)
+      true
+    else
+      rebase!(remaining_commits)
+    end
   end
 
   def resolve!
@@ -159,6 +164,10 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
       `git add -A`
       `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue`
     end
+    rebase!(load_remaining_commits)
+  end
+
+  def rebase_remaining!
     rebase!(load_remaining_commits)
   end
 
@@ -196,7 +205,7 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
   def modified_at
     if File.exist? repo_path
       repo = Rugged::Repository.new(repo_path)
-      if master = repo.branches.find { |b| b.name == "master" }
+      if master = repo.branches["master"]
         master.target.time
       end
     end
