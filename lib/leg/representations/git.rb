@@ -192,6 +192,16 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
     true
   end
 
+  def reset!
+    save_remaining_commits(nil)
+    FileUtils.cd(repo_path) do
+      `git cherry-pick --abort`
+    end
+    repo.head = "refs/heads/master"
+    repo.checkout_head(strategy: :force)
+    copy_repo_to_step!
+  end
+
   private
 
   def step_path
