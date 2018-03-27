@@ -19,6 +19,8 @@ class Leg::Commands::Step < Leg::Commands::BaseCommand
 
     step_number = @args.first.to_i
 
+    @git.checkout!(@args.first.to_i)
+
     FileUtils.cd(@git.repo_path) do
       @git.each_step do |cur_step, commit|
         if cur_step == step_number

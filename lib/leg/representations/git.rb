@@ -143,12 +143,28 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
     end
   end
 
+  def checkout!(step_number)
+    each_step do |cur_step, commit|
+      if cur_step == step_number
+        FileUtils.cd(repo_path) { `git checkout #{commit.oid}` }
+        save_state(load_state.step!(step_number))
+        copy_repo_to_step!
+        return true
+      end
+    end
+  end
+
   def commit!(options = {})
     copy_step_to_repo!
     remaining_commits = commits(after: repo.head.target).map(&:oid)
     FileUtils.cd(repo_path) do
       `git add -A`
       `git commit #{'--amend' if options[:amend]} -m"TODO: let user specify commit message"`
+    end
+    if options[:amend]
+      save_state(load_state.amend!)
+    else
+      save_state(load_state.add_commit!)
     end
     if options[:no_rebase]
       save_remaining_commits(remaining_commits)
@@ -179,12 +195,14 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
         if not $?.success?
           copy_repo_to_step!
           save_remaining_commits(remaining_commits[(commit_idx+1)..-1])
+          save_state(load_state.conflict!)
           return false
         end
       end
     end
 
     save_remaining_commits(nil)
+    save_state(nil)
 
     repo.references.update(repo.branches["master"], repo.head.target_id)
     repo.head = "refs/heads/master"
@@ -193,6 +211,7 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
   end
 
   def reset!
+    save_state(nil)
     save_remaining_commits(nil)
     FileUtils.cd(repo_path) do
       `git cherry-pick --abort`
@@ -200,6 +219,10 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
     repo.head = "refs/heads/master"
     repo.checkout_head(strategy: :force)
     copy_repo_to_step!
+  end
+
+  def state
+    load_state
   end
 
   private
@@ -218,6 +241,28 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
       if master = repo.branches["master"]
         master.target.time
       end
+    end
+  end
+
+  def state_path
+    File.join(@tutorial.config[:path], ".leg/state.yml")
+  end
+
+  def load_state
+    @state ||=
+      if File.exist?(state_path)
+        YAML.load_file(state_path)
+      else
+        State.new
+      end
+  end
+
+  def save_state(state)
+    @state = state
+    if state.nil?
+      FileUtils.rm_f(state_path)
+    else
+      File.write(state_path, state.to_yaml)
     end
   end
 
@@ -276,6 +321,51 @@ class Leg::Representations::Git < Leg::Representations::BaseRepresentation
 
     if diff
       repo.references.create("refs/tags/step-#{step_num}", commit_oid)
+    end
+  end
+
+  class State
+    attr_accessor :step_number, :operation, :args, :conflict
+
+    def initialize
+      @step_number = nil
+      @operation = nil
+      @args = []
+      @conflict = false
+    end
+
+    def step!(step_number)
+      @step_number = step_number
+      self
+    end
+
+    def add_commit!
+      if @operation.nil?
+        @operation = :commit
+        @args = [1, false]
+      elsif @operation == :commit
+        @args[0] += 1
+      else
+        raise "@operation must be :commit or nil"
+      end
+      self
+    end
+
+    def amend!
+      if @operation.nil?
+        @operation = :commit
+        @args = [0, true]
+      elsif @operation == :commit
+        @args[1] = true
+      else
+        raise "@operation must be :commit or nil"
+      end
+      self
+    end
+
+    def conflict!
+      @conflict = true
+      self
     end
   end
 end
