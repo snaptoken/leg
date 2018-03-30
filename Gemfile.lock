@@ -9,6 +9,13 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    coderay (1.1.2)
+    method_source (0.9.0)
+    minitest (5.11.3)
+    pry (0.11.3)
+      coderay (~> 1.1.0)
+      method_source (~> 0.9.0)
+    rake (10.5.0)
     redcarpet (3.4.0)
     rouge (2.0.7)
     rugged (0.25.1.1)
@@ -17,7 +24,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bundler (~> 1.16)
   leg!
+  minitest (~> 5.0)
+  pry
+  rake (~> 10.0)
 
 BUNDLED WITH
    1.16.1

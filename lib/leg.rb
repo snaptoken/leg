@@ -7,9 +7,6 @@ require 'rouge/plugins/redcarpet'
 require 'rugged'
 require 'yaml'
 
-module Leg
-end
-
 require 'leg/cli'
 require 'leg/commands'
 require 'leg/default_templates'
@@ -22,3 +19,7 @@ require 'leg/representations'
 require 'leg/step'
 require 'leg/template'
 require 'leg/tutorial'
+require 'leg/version'
+
+module Leg
+end

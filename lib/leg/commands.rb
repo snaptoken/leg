@@ -1,8 +1,10 @@
-module Leg::Commands
-  LIST = []
-end
-
 require 'leg/commands/base_command'
+
+module Leg
+  module Commands
+    LIST = []
+  end
+end
 
 require 'leg/commands/build'
 require 'leg/commands/step'

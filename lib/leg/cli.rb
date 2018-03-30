@@ -1,61 +1,62 @@
-class Leg::CLI
-  CONFIG_FILE = "leg.yml"
+module Leg
+  class CLI
+    CONFIG_FILE = "leg.yml"
 
-  def initialize
-    initial_dir = FileUtils.pwd
+    def initialize
+      initial_dir = FileUtils.pwd
 
-    @tutorial = nil
-    last_dir = nil
-    while FileUtils.pwd != last_dir
-      if File.exist?(CONFIG_FILE)
-        config = YAML.load_file(CONFIG_FILE)
-        if config == false
-          puts "Error: Invalid config file."
-          exit!
+      @tutorial = nil
+      last_dir = nil
+      while FileUtils.pwd != last_dir
+        if File.exist?(CONFIG_FILE)
+          config = YAML.load_file(CONFIG_FILE)
+          if config == false
+            puts "Error: Invalid config file."
+            exit!
+          end
+          config = {} unless config.is_a?(Hash)
+          config[:path] = FileUtils.pwd
+          config = symbolize_keys(config)
+          @tutorial = Leg::Tutorial.new(config)
+          break
         end
-        config = {} unless config.is_a?(Hash)
-        config[:path] = FileUtils.pwd
-        config = symbolize_keys(config)
-        @tutorial = Leg::Tutorial.new(config)
-        break
+
+        last_dir = FileUtils.pwd
+        FileUtils.cd('..')
       end
 
-      last_dir = FileUtils.pwd
-      FileUtils.cd('..')
+      FileUtils.cd(initial_dir)
     end
 
-    FileUtils.cd(initial_dir)
-  end
+    def run(args)
+      args = ["help"] if args.empty?
+      cmd_name = args.shift.downcase
 
-  def run(args)
-    args = ["help"] if args.empty?
-    cmd_name = args.shift.downcase
+      if cmd_name =~ /\A\d+\z/
+        args.unshift(cmd_name)
+        cmd_name = "step"
+      end
 
-    if cmd_name =~ /\A\d+\z/
-      args.unshift(cmd_name)
-      cmd_name = "step"
+      if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
+        cmd.new(args, @tutorial).run
+      else
+        puts "There is no '#{cmd_name}' command. Run `leg help` for help."
+      end
     end
 
-    if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
-      cmd.new(args, @tutorial).run
-    else
-      puts "There is no '#{cmd_name}' command. Run `leg help` for help."
-    end
-  end
+    private
 
-  private
-
-  def symbolize_keys(value)
-    case value
-    when Hash
-      value.map do |k, v|
-        [k.to_sym, symbolize_keys(v)]
-      end.to_h
-    when Array
-      value.map { |v| symbolize_keys(v) }
-    else
-      value
+    def symbolize_keys(value)
+      case value
+      when Hash
+        value.map do |k, v|
+          [k.to_sym, symbolize_keys(v)]
+        end.to_h
+      when Array
+        value.map { |v| symbolize_keys(v) }
+      else
+        value
+      end
     end
   end
 end
-
