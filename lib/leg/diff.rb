@@ -21,12 +21,12 @@ module Leg
       diff
     end
 
-    # Append a DiffLine to the Diff.
-    def <<(diff_line)
-      unless diff_line.is_a? Leg::DiffLine
-        raise ArgumentError, "expected a DiffLine"
+    # Append a Line to the Diff.
+    def <<(line)
+      unless line.is_a? Leg::Line
+        raise ArgumentError, "expected a Line"
       end
-      @lines << diff_line
+      @lines << line
       self
     end
 
@@ -91,7 +91,7 @@ module Leg
             old_line_num += 1
           end
 
-          cur_diff << Leg::DiffLine.new(type, line[1..-1], line_nums)
+          cur_diff << Leg::Line.new(type, line[1..-1], line_nums)
         else
           in_diff = false
         end

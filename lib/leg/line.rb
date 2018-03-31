@@ -1,5 +1,5 @@
 module Leg
-  class DiffLine
+  class Line
     TYPES = [:added, :removed, :unchanged, :folded]
 
     attr_reader :type, :source, :line_numbers
@@ -15,7 +15,7 @@ module Leg
     end
 
     def clone
-      Leg::DiffLine.new(@type, @source.dup, @line_numbers.dup)
+      Leg::Line.new(@type, @source.dup, @line_numbers.dup)
     end
 
     def type=(type)
