@@ -120,7 +120,7 @@ module Leg
       code = @lines.map(&:source).join("\n") + "\n"
       lexer = Rouge::Lexer.guess(filename: @filename, source: code)
       SYNTAX_HIGHLIGHTER.format(lexer.lex(code)).lines.each.with_index do |line_hl, idx|
-        @lines[idx].source = line_hl
+        @lines[idx].hl_source = line_hl
       end
       @syntax_highlighted = true
     end

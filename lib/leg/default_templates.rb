@@ -54,13 +54,13 @@ module Leg
             <% for line in diff.lines %>\\
               <% if line.type == :folded %>\\
                 <div class="line folded">\\
-                  <%= line.source.gsub('<span class="err">…</span>', '…') %>\\
+                  <%= line.hl_source.gsub('<span class="err">…</span>', '…') %>\\
                 </div>\\
               <% else %>\\
                 <% tag = {unchanged: :div, added: :ins, removed: :del}[line.type] %>\\
                 <% tag = :div if diff.is_new_file %>\\
                 <<%= tag %> class="line">\\
-                  <%= line.source %>\\
+                  <%= line.hl_source %>\\
                 </<%= tag %>>\\
               <% end %>\\
             <% end %>\\

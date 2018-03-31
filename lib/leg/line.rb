@@ -2,8 +2,8 @@ module Leg
   class Line
     TYPES = [:added, :removed, :unchanged, :folded]
 
-    attr_reader :type, :source, :line_numbers
-    attr_writer :source, :line_numbers
+    attr_reader :type
+    attr_accessor :source, :hl_source, :line_numbers
 
     def initialize(type, source, line_numbers)
       unless TYPES.include? type
@@ -15,7 +15,9 @@ module Leg
     end
 
     def clone
-      self.class.new(@type, @source.dup, @line_numbers.dup)
+      line = self.class.new(@type, @source.dup, @line_numbers.dup)
+      line.hl_source = @hl_source.dup
+      line
     end
 
     def type=(type)
