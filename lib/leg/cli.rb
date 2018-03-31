@@ -41,6 +41,7 @@ module Leg
         cmd.new(args, @tutorial).run
       else
         puts "There is no '#{cmd_name}' command. Run `leg help` for help."
+        1
       end
     end
 

@@ -1,5 +1,6 @@
 require 'erb'
 require 'fileutils'
+require 'open3'
 require 'optparse'
 require 'redcarpet'
 require 'rouge'

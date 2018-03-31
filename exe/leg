@@ -2,4 +2,5 @@
 
 require 'leg'
 
-Leg::CLI.new.run(ARGV)
+status = Leg::CLI.new.run(ARGV)
+exit(status) if status

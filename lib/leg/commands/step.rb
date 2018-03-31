@@ -21,19 +21,9 @@ module Leg
 
         step_number = @args.first.to_i
 
-        @git.checkout!(@args.first.to_i)
-
-        FileUtils.cd(@git.repo_path) do
-          @git.each_step do |cur_step, commit|
-            if cur_step == step_number
-              `git checkout #{commit.oid}`
-              @git.copy_repo_to_step!
-              exit
-            end
-          end
-
+        unless @git.checkout!(@args.first.to_i)
           puts "Error: Step not found."
-          exit 1
+          return 1
         end
       end
     end

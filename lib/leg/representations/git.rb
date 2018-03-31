@@ -27,7 +27,7 @@ module Leg
           #  add_commit(repo, nil, "-", step_num, counter)
           #end
 
-          repo.checkout_head(strategy: :force)
+          repo.checkout_head(strategy: :force) if repo.branches["master"]
         end
       end
 
@@ -148,7 +148,7 @@ module Leg
       def checkout!(step_number)
         each_step do |cur_step, commit|
           if cur_step == step_number
-            FileUtils.cd(repo_path) { `git checkout #{commit.oid}` }
+            FileUtils.cd(repo_path) { `git checkout #{commit.oid} 2>/dev/null` }
             save_state(load_state.step!(step_number))
             copy_repo_to_step!
             return true
@@ -158,7 +158,7 @@ module Leg
 
       def commit!(options = {})
         copy_step_to_repo!
-        remaining_commits = commits(after: repo.head.target).map(&:oid)
+        remaining_commits = repo.branches["master"] ? commits(after: repo.head.target.oid).map(&:oid) : []
         FileUtils.cd(repo_path) do
           `git add -A`
           `git commit #{'--amend' if options[:amend]} -m"TODO: let user specify commit message"`
@@ -180,7 +180,7 @@ module Leg
         copy_step_to_repo!
         FileUtils.cd(repo_path) do
           `git add -A`
-          `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue`
+          `git -c core.editor=true cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits --continue 2>/dev/null`
         end
         rebase!(load_remaining_commits)
       end
@@ -192,7 +192,7 @@ module Leg
       def rebase!(remaining_commits)
         FileUtils.cd(repo_path) do
           remaining_commits.each.with_index do |commit, commit_idx|
-            `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit}`
+            `git cherry-pick --allow-empty --allow-empty-message --keep-redundant-commits #{commit} 2>/dev/null`
 
             if not $?.success?
               copy_repo_to_step!
@@ -209,6 +209,8 @@ module Leg
         repo.references.update(repo.branches["master"], repo.head.target_id)
         repo.head = "refs/heads/master"
 
+        copy_repo_to_step!
+
         true
       end
 
@@ -216,7 +218,7 @@ module Leg
         save_state(nil)
         save_remaining_commits(nil)
         FileUtils.cd(repo_path) do
-          `git cherry-pick --abort`
+          `git cherry-pick --abort 2>/dev/null`
         end
         repo.head = "refs/heads/master"
         repo.checkout_head(strategy: :force)
