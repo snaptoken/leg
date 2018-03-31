@@ -55,20 +55,22 @@ module Leg
           FileUtils.mkdir_p("../build/html")
 
           include_default_css = true
+          page_template = Leg::DefaultTemplates::PAGE
           if File.exist?("page.html.erb")
-            tutorial.page_template = File.read("page.html.erb")
+            page_template = File.read("page.html.erb")
             include_default_css = false
           end
 
+          step_template = Leg::DefaultTemplates::STEP
           if File.exist?("step.html.erb")
-            tutorial.step_template = File.read("step.html.erb")
+            step_template = File.read("step.html.erb")
           end
-          tutorial.step_template.gsub!(/\\\s*/, "")
+          step_template.gsub!(/\\\s*/, "")
 
           tutorial.pages.each do |page|
             print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
 
-            html = Leg::Template.render_page(page, tutorial, @config)
+            html = Leg::Template.render_page(page_template, step_template, page, tutorial, @config)
             File.write("../build/html/#{page.filename}.html", html)
           end
           puts unless @opts[:quiet]

@@ -4,7 +4,7 @@ module Leg
       Leg::Template::Context.new(template_source, tutorial, config, params).render_template
     end
 
-    def self.render_page(page, tutorial, config)
+    def self.render_page(page_template, step_template, page, tutorial, config)
       content = ""
       page.steps.each do |step|
         if !step.text.strip.empty?
@@ -12,28 +12,28 @@ module Leg
           html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
             step = tutorial.step($1.to_i)
             step.syntax_highlight!
-            Leg::Template.render_step(step, tutorial, config)
+            Leg::Template.render_step(step_template, step, tutorial, config)
           end
           content << html
         end
 
         step.syntax_highlight!
-        content << Leg::Template.render_step(step, tutorial, config)
+        content << Leg::Template.render_step(step_template, step, tutorial, config)
       end
-      if @footer_text
+      if page.footer_text
         # TODO: DRY this up. Please.
         html = Leg::Markdown.render(page.footer_text)
         html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
           step = tutorial.step($1.to_i)
           step.syntax_highlight!
-          Leg::Template.render_step(step, tutorial, config)
+          Leg::Template.render_step(step_template, step, tutorial, config)
         end
         content << html
       end
 
       page_number = tutorial.pages.index(page) + 1
 
-      Leg::Template.render(tutorial.page_template, tutorial, config,
+      Leg::Template.render(page_template, tutorial, config,
         #offline: offline,
         page_title: page.title,
         content: content,
@@ -43,8 +43,8 @@ module Leg
       )
     end
 
-    def self.render_step(step, tutorial, config)
-      Leg::Template.render(tutorial.step_template, tutorial, config,
+    def self.render_step(step_template, step, tutorial, config)
+      Leg::Template.render(step_template, tutorial, config,
         #offline: offline,
         number: step.number,
         summary: step.summary,

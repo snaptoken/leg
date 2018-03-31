@@ -1,13 +1,10 @@
 module Leg
   class Tutorial
     attr_accessor :config
-    attr_accessor :page_template, :step_template
     attr_reader :pages
 
     def initialize(config = nil)
       @config = config
-      @page_template = Leg::DefaultTemplates::PAGE
-      @step_template = Leg::DefaultTemplates::STEP
       @pages = []
     end
 
