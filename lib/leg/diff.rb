@@ -77,21 +77,19 @@ module Leg
         elsif in_diff && [' ', '|', '+', '-'].include?(line[0])
           case line[0]
           when ' ', '|'
-            type = :unchanged
             line_nums = [old_line_num, new_line_num]
             old_line_num += 1
             new_line_num += 1
+            cur_diff << Leg::Line.new(:unchanged, line[1..-1], line_nums)
           when '+'
-            type = :added
             line_nums = [nil, new_line_num]
             new_line_num += 1
+            cur_diff << Leg::Line::Added.new(:added, line[1..-1], line_nums)
           when '-'
-            type = :removed
             line_nums = [old_line_num, nil]
             old_line_num += 1
+            cur_diff << Leg::Line.new(:removed, line[1..-1], line_nums)
           end
-
-          cur_diff << Leg::Line.new(type, line[1..-1], line_nums)
         else
           in_diff = false
         end

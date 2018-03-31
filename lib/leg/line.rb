@@ -15,7 +15,7 @@ module Leg
     end
 
     def clone
-      Leg::Line.new(@type, @source.dup, @line_numbers.dup)
+      self.class.new(@type, @source.dup, @line_numbers.dup)
     end
 
     def type=(type)
@@ -50,6 +50,16 @@ module Leg
         "#{options[:unchanged_char]}#{@source}\n"
       when :folded
         raise "can't convert folded line to patch"
+      end
+    end
+
+    class Added < Line
+      def line_number
+        @line_numbers[1]
+      end
+
+      def to_patch(options = {})
+        "+#{@source}\n"
       end
     end
   end
