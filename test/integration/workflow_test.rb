@@ -128,77 +128,72 @@ diff --git a/hello.c b/hello.c
 
 END
 
-describe "leg workflow" do
-  it "must allow creating and modifying a tutorial" do
+class WorkflowTest < Minitest::Test
+  def test_workflow
     Dir.mktmpdir do |dir|
       FileUtils.cd(dir)
 
-      #Leg::CLI.new.run(["init"])
-      FileUtils.mkdir_p(".leg/repo")
-      FileUtils.mkdir_p("step")
-      FileUtils.mkdir_p("doc")
-      File.write("leg.yml", "---")
-      FileUtils.cd(".leg/repo") { `git init` }
+      leg_command "init"
 
       File.write("step/hello.c", STEP_1)
-      Leg::CLI.new.run(["commit"])
+      leg_command "commit"
 
       File.write("step/hello.c", STEP_2)
-      Leg::CLI.new.run(["commit"])
+      leg_command "commit"
 
       File.write("step/hello.c", STEP_3)
-      Leg::CLI.new.run(["commit"])
+      leg_command "commit"
 
       File.write("step/hello.c", STEP_4)
-      Leg::CLI.new.run(["commit"])
+      leg_command "commit"
 
-      Leg::CLI.new.run(["1"])
-      File.read("step/hello.c").must_equal(STEP_1)
+      leg_command "1"
+      assert_equal STEP_1, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["2"])
-      File.read("step/hello.c").must_equal(STEP_2)
+      leg_command "2"
+      assert_equal STEP_2, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["3"])
-      File.read("step/hello.c").must_equal(STEP_3)
+      leg_command "3"
+      assert_equal STEP_3, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["reset"])
-      File.read("step/hello.c").must_equal(STEP_4)
+      leg_command "reset"
+      assert_equal STEP_4, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["2"])
-      File.read("step/hello.c").must_equal(STEP_2)
+      leg_command "2"
+      assert_equal STEP_2, File.read("step/hello.c")
 
       File.write("step/hello.c", STEP_2B)
-      Leg::CLI.new.run(["amend"])
-      File.read("step/hello.c").must_match(/^<<<<<<< HEAD$/)
+      leg_command "amend"
+      assert_includes File.read("step/hello.c"), "<<<<<<< HEAD"
 
       File.write("step/hello.c", STEP_3B)
-      Leg::CLI.new.run(["resolve"])
-      File.read("step/hello.c").must_match(/^<<<<<<< HEAD$/)
+      leg_command "resolve"
+      assert_includes File.read("step/hello.c"), "<<<<<<< HEAD"
 
       File.write("step/hello.c", STEP_4B)
-      Leg::CLI.new.run(["resolve"])
-      File.read("step/hello.c").wont_match(/^<<<<<<< HEAD$/)
+      leg_command "resolve"
+      refute_includes File.read("step/hello.c"), "<<<<<<< HEAD"
 
-      Leg::CLI.new.run(["1"])
-      File.read("step/hello.c").must_equal(STEP_1)
+      leg_command "1"
+      assert_equal STEP_1, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["2"])
-      File.read("step/hello.c").must_equal(STEP_2B)
+      leg_command "2"
+      assert_equal STEP_2B, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["3"])
-      File.read("step/hello.c").must_equal(STEP_3B)
+      leg_command "3"
+      assert_equal STEP_3B, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["reset"])
-      File.read("step/hello.c").must_equal(STEP_4B)
+      leg_command "reset"
+      assert_equal STEP_4B, File.read("step/hello.c")
 
-      Leg::CLI.new.run(["3"])
-      File.read("step/hello.c").must_equal(STEP_3B)
+      leg_command "3"
+      assert_equal STEP_3B, File.read("step/hello.c")
 
       File.write("step/hello.c", STEP_4C)
-      Leg::CLI.new.run(["commit"])
-      File.read("step/hello.c").must_equal(STEP_5C)
+      leg_command "commit"
+      assert_equal STEP_5C, File.read("step/hello.c")
 
-      File.read("doc/tutorial.litdiff").must_equal(LITDIFF)
+      assert_equal LITDIFF, File.read("doc/tutorial.litdiff")
     end
   end
 end

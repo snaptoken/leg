@@ -145,6 +145,11 @@ module Leg
         end
       end
 
+      def init!
+        FileUtils.mkdir_p(repo_path)
+        FileUtils.cd(repo_path) { `git init` }
+      end
+
       def checkout!(step_number)
         each_step do |cur_step, commit|
           if cur_step == step_number

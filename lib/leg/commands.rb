@@ -6,9 +6,10 @@ module Leg
   end
 end
 
+require 'leg/commands/init'
 require 'leg/commands/build'
-require 'leg/commands/step'
 require 'leg/commands/status'
+require 'leg/commands/step'
 require 'leg/commands/diff'
 require 'leg/commands/commit'
 require 'leg/commands/amend'
