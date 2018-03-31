@@ -24,7 +24,7 @@ module Leg
       end
     end
 
-    def to_html(tutorial, offline)
+    def to_html(tutorial, config, offline)
       content = ""
       @steps.each do |step|
         if !step.text.strip.empty?
@@ -38,7 +38,7 @@ module Leg
         end
 
         step.syntax_highlight!
-        content << step.to_html(tutorial, offline)
+        content << step.to_html(tutorial, config, offline)
       end
       if @footer_text
         # TODO: DRY this up. Please.
@@ -46,14 +46,14 @@ module Leg
         html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
           step = tutorial.step($1.to_i)
           step.syntax_highlight!
-          step.to_html(tutorial, offline)
+          step.to_html(tutorial, config, offline)
         end
         content << html
       end
 
       page_number = tutorial.pages.index(self) + 1
 
-      Leg::Template.new(tutorial.page_template, tutorial,
+      Leg::Template.new(tutorial.page_template, tutorial, config,
         offline: offline,
         page_title: title,
         content: content,

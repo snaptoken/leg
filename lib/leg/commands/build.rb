@@ -24,15 +24,15 @@ module Leg
 
         needs! :config, :repo
 
-        @git.load!(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
+        tutorial = @git.load!(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
           print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
         end
         puts unless @opts[:quiet]
 
-        num_steps = @tutorial.num_steps
+        num_steps = tutorial.num_steps
 
-        if @tutorial.config[:diff_transformers]
-          transformers = @tutorial.config[:diff_transformers].map do |transformer_config|
+        if @config.options[:diff_transformers]
+          transformers = @config.options[:diff_transformers].map do |transformer_config|
             if transformer_config.is_a? String
               transformer = transformer_config
               options = {}
@@ -43,36 +43,36 @@ module Leg
             Leg::DiffTransformers.const_get(transformer).new(options)
           end
 
-          @tutorial.transform_diffs(transformers) do |step_num|
+          tutorial.transform_diffs(transformers) do |step_num|
             print "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
           end
           puts unless @opts[:quiet]
         end
 
-        FileUtils.mkdir_p(File.join(@tutorial.config[:path], "template"))
-        FileUtils.cd(File.join(@tutorial.config[:path], "template")) do
+        FileUtils.mkdir_p(File.join(@config.path, "template"))
+        FileUtils.cd(File.join(@config.path, "template")) do
           FileUtils.rm_rf("../build")
           FileUtils.mkdir_p("../build/html")
           FileUtils.mkdir_p("../build/html-offline")
 
           include_default_css = true
           if File.exist?("page.html.erb")
-            @tutorial.page_template = File.read("page.html.erb")
+            tutorial.page_template = File.read("page.html.erb")
             include_default_css = false
           end
 
           if File.exist?("step.html.erb")
-            @tutorial.step_template = File.read("step.html.erb")
+            tutorial.step_template = File.read("step.html.erb")
           end
-          @tutorial.step_template.gsub!(/\\\s*/, "")
+          tutorial.step_template.gsub!(/\\\s*/, "")
 
-          @tutorial.pages.each do |page|
+          tutorial.pages.each do |page|
             print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
 
-            html = page.to_html(@tutorial, false)
+            html = page.to_html(tutorial, @config, false)
             File.write("../build/html/#{page.filename}.html", html)
 
-            offline_html = page.to_html(@tutorial, true)
+            offline_html = page.to_html(tutorial, @config, true)
             File.write("../build/html-offline/#{page.filename}.html", offline_html)
           end
           puts unless @opts[:quiet]
@@ -85,10 +85,10 @@ module Leg
 
             # XXX: currently only processes top-level ERB template files.
             if name.end_with? ".erb"
-              output = Leg::Template.new(File.read(f), @tutorial, offline: false).render_template
+              output = Leg::Template.new(File.read(f), tutorial, @config, offline: false).render_template
               File.write("../build/html/#{name[0..-5]}", output)
 
-              output = Leg::Template.new(File.read(f), @tutorial, offline: true).render_template
+              output = Leg::Template.new(File.read(f), tutorial, @config, offline: true).render_template
               File.write("../build/html-offline/#{name[0..-5]}", output)
             else
               FileUtils.cp_r(f, "../build/html/#{name}")
@@ -97,11 +97,11 @@ module Leg
           end
 
           if include_default_css && !File.exist?("../build/html/style.css")
-            output = Leg::Template.new(Leg::DefaultTemplates::CSS, @tutorial, offline: false).render_template
+            output = Leg::Template.new(Leg::DefaultTemplates::CSS, tutorial, @config, offline: false).render_template
             File.write("../build/html/style.css", output)
           end
           if include_default_css && !File.exist?("../build/html-offline/style.css")
-            output = Leg::Template.new(Leg::DefaultTemplates::CSS, @tutorial, offline: true).render_template
+            output = Leg::Template.new(Leg::DefaultTemplates::CSS, tutorial, @config, offline: true).render_template
             File.write("../build/html-offline/style.css", output)
           end
         end

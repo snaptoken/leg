@@ -9,8 +9,8 @@ module Leg
       @diffs = diffs
     end
 
-    def to_html(tutorial, offline)
-      Leg::Template.new(tutorial.step_template, tutorial,
+    def to_html(tutorial, config, offline)
+      Leg::Template.new(tutorial.step_template, tutorial, config,
         offline: offline,
         number: @number,
         summary: @summary,
