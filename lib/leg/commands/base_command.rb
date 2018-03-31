@@ -3,11 +3,11 @@ module Leg
     class BaseCommand
       attr_reader :config
 
-      def initialize(args, tutorial)
+      def initialize(args, config)
         @args = args
-        @tutorial = tutorial
-        @git = Leg::Representations::Git.new(@tutorial)
-        @litdiff = Leg::Representations::Litdiff.new(@tutorial)
+        @config = config
+        @git = Leg::Representations::Git.new(@config)
+        @litdiff = Leg::Representations::Litdiff.new(@config)
         parseopts!
       end
 
@@ -46,7 +46,7 @@ module Leg
         whats.each do |what|
           case what
           when :config
-            if @tutorial.nil?
+            if @config.nil?
               puts "Error: You are not in a leg working directory."
               exit 1
             end
@@ -62,33 +62,33 @@ module Leg
       end
 
       def git_to_litdiff!
-        @git.load! do |step_num|
+        tutorial = @git.load! do |step_num|
           print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
         end
         puts unless @opts[:quiet]
 
-        num_steps = @tutorial.num_steps
-        @litdiff.save! do |step_num|
+        num_steps = tutorial.num_steps
+        @litdiff.save!(tutorial) do |step_num|
           print "\r\e[K[Tutorial -> doc/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
         end
         puts unless @opts[:quiet]
 
-        @tutorial.synced!
+        @config.synced!
       end
 
       def litdiff_to_git!
-        @litdiff.load! do |step_num|
+        tutorial = @litdiff.load! do |step_num|
           print "\r\e[K[doc/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
         end
         puts unless @opts[:quiet]
 
-        num_steps = @tutorial.num_steps
-        @git.save! do |step_num|
+        num_steps = tutorial.num_steps
+        @git.save!(tutorial) do |step_num|
           print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
         end
         puts unless @opts[:quiet]
 
-        @tutorial.synced!
+        @config.synced!
       end
     end
   end

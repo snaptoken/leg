@@ -33,7 +33,7 @@ module Leg
           puts
           puts "For more help on a specific command, run `leg help <command>`."
         elsif cmd = Leg::Commands::LIST.find { |cmd| cmd.name == @args.first }
-          cmd.new(["--help"], @tutorial)
+          cmd.new(["--help"], @config)
         else
           puts "There is no '#{@args.first}' command."
         end

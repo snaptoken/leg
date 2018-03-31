@@ -1,16 +1,16 @@
 module Leg
   module Representations
     class BaseRepresentation
-      def initialize(tutorial)
-        @tutorial = tutorial
+      def initialize(config)
+        @config = config
       end
 
-      # Should save @tutorial to disk.
-      def save!(options = {})
+      # Should save tutorial to disk.
+      def save!(tutorial, options = {})
         raise NotImplementedError
       end
 
-      # Should load @tutorial (in place) from disk, and return it.
+      # Should load tutorial from disk, and return it.
       def load!(options = {})
         raise NotImplementedError
       end
@@ -18,7 +18,7 @@ module Leg
       # Returns true if this representation has been modified by the user since the
       # last sync.
       def modified?
-        synced_at = @tutorial.last_synced_at
+        synced_at = @config.last_synced_at
         repr_modified_at = modified_at
         return false if synced_at.nil? or repr_modified_at.nil?
 

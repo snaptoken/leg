@@ -10,6 +10,7 @@ require 'yaml'
 
 require 'leg/cli'
 require 'leg/commands'
+require 'leg/config'
 require 'leg/default_templates'
 require 'leg/diff'
 require 'leg/diff_transformers'

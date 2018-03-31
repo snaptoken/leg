@@ -1,28 +1,19 @@
 module Leg
   class CLI
-    CONFIG_FILE = "leg.yml"
-
     def initialize
       initial_dir = FileUtils.pwd
 
-      @tutorial = nil
+      @config = nil
       last_dir = nil
       while FileUtils.pwd != last_dir
-        if File.exist?(CONFIG_FILE)
-          config = YAML.load_file(CONFIG_FILE)
-          if config == false
-            puts "Error: Invalid config file."
-            exit!
-          end
-          config = {} unless config.is_a?(Hash)
-          config[:path] = FileUtils.pwd
-          config = symbolize_keys(config)
-          @tutorial = Leg::Tutorial.new(config)
+        if File.exist?("leg.yml")
+          @config = Leg::Config.new(FileUtils.pwd)
+          @config.load!
           break
         end
 
         last_dir = FileUtils.pwd
-        FileUtils.cd('..')
+        FileUtils.cd("..")
       end
 
       FileUtils.cd(initial_dir)
@@ -38,25 +29,10 @@ module Leg
       end
 
       if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
-        cmd.new(args, @tutorial).run
+        cmd.new(args, @config).run
       else
         puts "There is no '#{cmd_name}' command. Run `leg help` for help."
         1
-      end
-    end
-
-    private
-
-    def symbolize_keys(value)
-      case value
-      when Hash
-        value.map do |k, v|
-          [k.to_sym, symbolize_keys(v)]
-        end.to_h
-      when Array
-        value.map { |v| symbolize_keys(v) }
-      else
-        value
       end
     end
   end

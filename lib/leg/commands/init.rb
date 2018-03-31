@@ -17,7 +17,7 @@ module Leg
       end
 
       def run
-        if @tutorial
+        if @config
           puts "You are already in a leg working directory."
           return 1
         end
@@ -28,8 +28,8 @@ module Leg
         File.write("doc/tutorial.litdiff", "")
         File.write("leg.yml", "---")
 
-        tutorial = Leg::Tutorial.new(path: FileUtils.pwd)
-        git = Leg::Representations::Git.new(tutorial)
+        config = Leg::Config.new(FileUtils.pwd)
+        git = Leg::Representations::Git.new(config)
         git.init!
       end
     end

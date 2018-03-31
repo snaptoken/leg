@@ -1,7 +1,7 @@
 module Leg
   module Representations
     class Git < BaseRepresentation
-      def save!(options = {})
+      def save!(tutorial, options = {})
         FileUtils.rm_rf(repo_path)
         FileUtils.mkdir_p(repo_path)
 
@@ -9,7 +9,7 @@ module Leg
           repo = Rugged::Repository.init_at(".")
 
           step_num = 1
-          @tutorial.pages.each do |page|
+          tutorial.pages.each do |page|
             message = "~~~ #{page.filename}"
             message << "\n\n#{page.footer_text}" if page.footer_text
             add_commit(repo, nil, message, step_num)
@@ -42,11 +42,11 @@ module Leg
         git_diff_options[:ignore_whitespace_change] = true if options[:diffs_ignore_whitespace]
 
         page = nil
-        @tutorial.clear
+        tutorial = Leg::Tutorial.new(@config)
         each_step(git_diff_options) do |step_num, commit, summary, text, patches|
           if patches.empty?
             if summary =~ /^~~~ (.+)$/
-              @tutorial << page unless page.nil?
+              tutorial << page unless page.nil?
 
               page = Leg::Page.new($1)
               page.footer_text = text unless text.empty?
@@ -63,8 +63,8 @@ module Leg
             yield step_num if block_given?
           end
         end
-        @tutorial << page unless page.nil?
-        @tutorial
+        tutorial << page unless page.nil?
+        tutorial
       end
 
       def copy_repo_to_step!
@@ -97,7 +97,7 @@ module Leg
       end
 
       def repo_path
-        File.join(@tutorial.config[:path], ".leg/repo")
+        File.join(@config.path, ".leg/repo")
       end
 
       def repo
@@ -237,11 +237,11 @@ module Leg
       private
 
       def step_path
-        File.join(@tutorial.config[:path], "step")
+        File.join(@config.path, "step")
       end
 
       def remaining_commits_path
-        File.join(@tutorial.config[:path], ".leg/remaining_commits")
+        File.join(@config.path, ".leg/remaining_commits")
       end
 
       def modified_at
@@ -254,7 +254,7 @@ module Leg
       end
 
       def state_path
-        File.join(@tutorial.config[:path], ".leg/state.yml")
+        File.join(@config.path, ".leg/state.yml")
       end
 
       def load_state
@@ -314,10 +314,10 @@ module Leg
 
         options = {}
         options[:tree] = index.write_tree(repo)
-        if @tutorial.config[:repo_author_name]
+        if @config.options[:repo_author_name]
           options[:author] = {
-            name: @tutorial.config[:repo_author_name],
-            email: @tutorial.config[:repo_author_email],
+            name: @config.options[:repo_author_name],
+            email: @config.options[:repo_author_email],
             time: Time.now
           }
           options[:committer] = options[:author]

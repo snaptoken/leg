@@ -2,15 +2,16 @@ module Leg
   class Template
     attr_reader :tutorial
 
-    def initialize(template_source, tutorial, params)
+    def initialize(template_source, tutorial, config, params)
       @template_source = template_source
       @tutorial = tutorial
+      @config = config
       @params = params
     end
 
     def render_template
       b = binding
-      @tutorial.config.merge(@params).each do |name, value|
+      @config.options.merge(@params).each do |name, value|
         b.local_variable_set(name, value)
       end
       ERB.new(@template_source).result(b)
@@ -40,7 +41,7 @@ module Leg
     end
 
     def syntax_highlighting_css(scope)
-      syntax_theme = @tutorial.config[:syntax_theme] || "github"
+      syntax_theme = @config.options[:syntax_theme] || "github"
       if syntax_theme.is_a? String
         theme = Rouge::Theme.find(syntax_theme)
       elsif syntax_theme.is_a? Hash

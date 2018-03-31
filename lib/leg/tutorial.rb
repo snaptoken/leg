@@ -4,7 +4,7 @@ module Leg
     attr_accessor :page_template, :step_template
     attr_reader :pages
 
-    def initialize(config = {})
+    def initialize(config = nil)
       @config = config
       @page_template = Leg::DefaultTemplates::PAGE
       @step_template = Leg::DefaultTemplates::STEP
@@ -47,20 +47,6 @@ module Leg
           step_num += 1
         end
       end
-    end
-
-    def last_synced_at
-      File.mtime(last_synced_path) if File.exist?(last_synced_path)
-    end
-
-    def synced!
-      FileUtils.touch(last_synced_path)
-    end
-
-    private
-
-    def last_synced_path
-      File.join(@config[:path], ".leg/last_synced")
     end
   end
 end
