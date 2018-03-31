@@ -53,7 +53,6 @@ module Leg
         FileUtils.cd(File.join(@config.path, "template")) do
           FileUtils.rm_rf("../build")
           FileUtils.mkdir_p("../build/html")
-          FileUtils.mkdir_p("../build/html-offline")
 
           include_default_css = true
           if File.exist?("page.html.erb")
@@ -69,11 +68,8 @@ module Leg
           tutorial.pages.each do |page|
             print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
 
-            html = page.to_html(tutorial, @config, false)
+            html = Leg::Template.render_page(page, tutorial, @config)
             File.write("../build/html/#{page.filename}.html", html)
-
-            offline_html = page.to_html(tutorial, @config, true)
-            File.write("../build/html-offline/#{page.filename}.html", offline_html)
           end
           puts unless @opts[:quiet]
 
@@ -85,24 +81,16 @@ module Leg
 
             # XXX: currently only processes top-level ERB template files.
             if name.end_with? ".erb"
-              output = Leg::Template.new(File.read(f), tutorial, @config, offline: false).render_template
+              output = Leg::Template.render(File.read(f), tutorial, @config)
               File.write("../build/html/#{name[0..-5]}", output)
-
-              output = Leg::Template.new(File.read(f), tutorial, @config, offline: true).render_template
-              File.write("../build/html-offline/#{name[0..-5]}", output)
             else
               FileUtils.cp_r(f, "../build/html/#{name}")
-              FileUtils.cp_r(f, "../build/html-offline/#{name}")
             end
           end
 
           if include_default_css && !File.exist?("../build/html/style.css")
-            output = Leg::Template.new(Leg::DefaultTemplates::CSS, tutorial, @config, offline: false).render_template
+            output = Leg::Template.render(Leg::DefaultTemplates::CSS, tutorial, @config)
             File.write("../build/html/style.css", output)
-          end
-          if include_default_css && !File.exist?("../build/html-offline/style.css")
-            output = Leg::Template.new(Leg::DefaultTemplates::CSS, tutorial, @config, offline: true).render_template
-            File.write("../build/html-offline/style.css", output)
           end
         end
       end

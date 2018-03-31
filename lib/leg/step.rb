@@ -9,15 +9,6 @@ module Leg
       @diffs = diffs
     end
 
-    def to_html(tutorial, config, offline)
-      Leg::Template.new(tutorial.step_template, tutorial, config,
-        offline: offline,
-        number: @number,
-        summary: @summary,
-        diffs: @diffs
-      ).render_template
-    end
-
     def to_patch(options = {})
       @diffs.map { |diff| diff.to_patch(options) }.join("\n")
     end
