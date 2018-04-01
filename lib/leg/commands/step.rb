@@ -23,7 +23,7 @@ module Leg
 
         unless @git.checkout!(@args.first.to_i)
           puts "Error: Step not found."
-          return 1
+          return false
         end
       end
     end

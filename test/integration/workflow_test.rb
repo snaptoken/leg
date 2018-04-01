@@ -128,6 +128,68 @@ diff --git a/hello.c b/hello.c
 
 END
 
+MARKDOWN = <<~END
+## 1. TODO: let user specify commit message
+
+```diff
+ // hello.c
++int main(void) {}
+```
+
+## 2. TODO: let user specify commit message
+
+```diff
+ // hello.c
+-int main(void) {}
++int main(int argc, char *argv[]) {
++  return 0;
++}
+```
+
+## 3. TODO: let user specify commit message
+
+```diff
+ // hello.c
+ int main(int argc, char *argv[]) {
++  printf("Hello, world!\\n");
++
+   return 0;
+ }
+```
+
+## 4. TODO: let user specify commit message
+
+```diff
+ // hello.c
+ int main(int argc, char *argv[]) {
+   printf("Hello, world!\\n");
+ \\
+   return 0;
+ }
++
++// the end
+```
+
+## 5. TODO: let user specify commit message
+
+```diff
+ // hello.c
++#include <stdio.h>
++
+ int main(int argc, char *argv[]) {
+   printf("Hello, world!\\n");
+ \\
+   return 0;
+ }
+ \\
+ // the end
+```
+
+
+END
+
+MARKDOWN.gsub!(/\\$/, "")
+
 class WorkflowTest < Minitest::Test
   def test_workflow
     Dir.mktmpdir do |dir|
@@ -197,6 +259,7 @@ class WorkflowTest < Minitest::Test
 
       leg_command "build"
       assert File.exists?("build/html/tutorial.html")
+      assert_equal MARKDOWN, File.read("build/md/tutorial.md")
     end
   end
 end

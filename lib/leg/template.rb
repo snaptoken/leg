@@ -4,17 +4,15 @@ module Leg
       Leg::Template::Context.new(template_source, tutorial, config, params).render_template
     end
 
-    def self.render_page(page_template, step_template, page, tutorial, config)
+    def self.render_page(page_template, step_template, format, page, tutorial, config)
       content = ""
       page.steps.each do |step|
         if !step.text.strip.empty?
-          html = Leg::Markdown.render(step.text)
-          html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
-            step = tutorial.step($1.to_i)
-            step.syntax_highlight!
-            Leg::Template.render_step(step_template, step, tutorial, config)
+          output = step.text.strip + "\n\n"
+          if format == "html"
+            output = Leg::Markdown.render(output)
           end
-          content << html
+          content << output
         end
 
         step.syntax_highlight!
@@ -22,19 +20,16 @@ module Leg
       end
       if page.footer_text
         # TODO: DRY this up. Please.
-        html = Leg::Markdown.render(page.footer_text)
-        html.gsub!(/<p>{{step (\d+)}}<\/p>/) do
-          step = tutorial.step($1.to_i)
-          step.syntax_highlight!
-          Leg::Template.render_step(step_template, step, tutorial, config)
+        output = page.footer_text.strip + "\n\n"
+        if format == "html"
+          output = Leg::Markdown.render(output)
         end
-        content << html
+        content << output
       end
 
       page_number = tutorial.pages.index(page) + 1
 
       Leg::Template.render(page_template, tutorial, config,
-        #offline: offline,
         page_title: page.title,
         content: content,
         page_number: page_number,
@@ -45,7 +40,6 @@ module Leg
 
     def self.render_step(step_template, step, tutorial, config)
       Leg::Template.render(step_template, tutorial, config,
-        #offline: offline,
         number: step.number,
         summary: step.summary,
         diffs: step.diffs
@@ -83,12 +77,6 @@ module Leg
 
       def pages
         @tutorial.pages
-      end
-
-      def step(number)
-        step = @tutorial.step(number)
-        step.syntax_highlight!
-        step.to_html(@tutorial, @params[:offline])
       end
 
       def syntax_highlighting_css(scope)

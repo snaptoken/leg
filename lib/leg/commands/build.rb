@@ -49,50 +49,63 @@ module Leg
           puts unless @opts[:quiet]
         end
 
-        FileUtils.mkdir_p(File.join(@config.path, "template"))
-        FileUtils.cd(File.join(@config.path, "template")) do
-          FileUtils.rm_rf("../build")
-          FileUtils.mkdir_p("../build/html")
+        templates = Dir[File.join(@config.path, "template{,-?*}")].map do |template_dir|
+          [template_dir, File.basename(template_dir).split("-")[1] || "html"]
+        end
+        if templates.empty?
+          templates = [[nil, "html"], [nil, "md"]]
+        end
 
-          include_default_css = true
-          page_template = Leg::DefaultTemplates::PAGE
-          if File.exist?("page.html.erb")
-            page_template = File.read("page.html.erb")
-            include_default_css = false
-          end
+        FileUtils.rm_rf(File.join(@config.path, "build"))
+        templates.each do |template_dir, format|
+          FileUtils.cd(@config.path) do
+            FileUtils.mkdir_p("build/#{format}")
 
-          step_template = Leg::DefaultTemplates::STEP
-          if File.exist?("step.html.erb")
-            step_template = File.read("step.html.erb")
-          end
-          step_template.gsub!(/\\\s*/, "")
-
-          tutorial.pages.each do |page|
-            print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
-
-            html = Leg::Template.render_page(page_template, step_template, page, tutorial, @config)
-            File.write("../build/html/#{page.filename}.html", html)
-          end
-          puts unless @opts[:quiet]
-
-          Dir["*"].each do |f|
-            name = File.basename(f)
-
-            next if %w(page.html.erb step.html.erb).include? name
-            next if name.start_with? "_"
-
-            # XXX: currently only processes top-level ERB template files.
-            if name.end_with? ".erb"
-              output = Leg::Template.render(File.read(f), tutorial, @config)
-              File.write("../build/html/#{name[0..-5]}", output)
-            else
-              FileUtils.cp_r(f, "../build/html/#{name}")
+            include_default_css = (format == "html")
+            page_template = Leg::DefaultTemplates::PAGE[format]
+            if template_dir && File.exist?(File.join(template_dir, "page.#{format}.erb"))
+              page_template = File.read(File.join(template_dir, "page.#{format}.erb"))
+              include_default_css = false
             end
-          end
+            page_template.gsub!(/\\\s*/, "")
 
-          if include_default_css && !File.exist?("../build/html/style.css")
-            output = Leg::Template.render(Leg::DefaultTemplates::CSS, tutorial, @config)
-            File.write("../build/html/style.css", output)
+            step_template = Leg::DefaultTemplates::STEP[format]
+            if template_dir && File.exist?(File.join(template_dir, "step.#{format}.erb"))
+              step_template = File.read(File.join(template_dir, "step.#{format}.erb"))
+            end
+            step_template.gsub!(/\\\s*/, "")
+
+            tutorial.pages.each do |page|
+              print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
+
+              output = Leg::Template.render_page(page_template, step_template, format, page, tutorial, @config)
+              File.write("build/#{format}/#{page.filename}.#{format}", output)
+            end
+            puts unless @opts[:quiet]
+
+            if template_dir
+              FileUtils.cd(template_dir) do
+                Dir["*"].each do |f|
+                  name = File.basename(f)
+
+                  next if ["page.#{format}.erb", "step.#{format}.erb"].include? name
+                  next if name.start_with? "_"
+
+                  # XXX: currently only processes top-level ERB template files.
+                  if name.end_with? ".erb"
+                    output = Leg::Template.render(File.read(f), tutorial, @config)
+                    File.write("../build/#{format}/#{name[0..-5]}", output)
+                  else
+                    FileUtils.cp_r(f, "../build/#{format}/#{name}")
+                  end
+                end
+              end
+            end
+
+            if include_default_css && !File.exist?("build/#{format}/style.css")
+              output = Leg::Template.render(Leg::DefaultTemplates::CSS, tutorial, @config)
+              File.write("build/#{format}/style.css", output)
+            end
           end
         end
       end

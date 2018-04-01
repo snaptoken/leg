@@ -1,6 +1,9 @@
 module Leg
   module DefaultTemplates
-    PAGE = <<~TEMPLATE
+    PAGE = {}
+    STEP = {}
+
+    PAGE["html"] = <<~TEMPLATE
       <!doctype html>
       <html>
         <head>
@@ -30,42 +33,63 @@ module Leg
           <div id="container">
             <%= content %>
           </div>
-          <footer class="bar">
-            <nav>
-              <a href="#">top of page</a>
-            </nav>
-          </footer>
         </body>
       </html>
     TEMPLATE
 
-    STEP = <<~TEMPLATE
-      <% for diff in diffs %>
-        <div class="diff">
-          <div class="diff-header">
-            <div class="step-filename">
-              <%= diff.filename %>
+    STEP["html"] = <<~TEMPLATE
+      <div class="step">
+        <div class="step-number">
+          <%= number %>
+        </div>
+
+        <% for diff in diffs %>
+          <div class="diff">
+            <div class="diff-header">
+              <div class="diff-summary">
+                <%= markdown(summary) %>
+              </div>
+              <div class="diff-filename">
+                <%= diff.filename %>
+              </div>
             </div>
-            <div class="step-number">
-              Step <%= number %>
+            <div class="diff-code">
+              <table>
+              <% for line in diff.lines %>
+                <tr>
+                  <td class="line-number">
+                    <%= line.line_number %>
+                  </td>
+                  <td class="line <%= diff.is_new_file ? :unchanged : line.type %>">\\
+                    <% if line.type == :folded %>\\
+                      <%= line.hl_source.gsub('<span class="err">…</span>', '…') %>\\
+                    <% else %>\\
+                      <%= line.hl_source %>\\
+                    <% end %>\\
+                  </td>
+                </tr>
+              <% end %>
+              </table>
             </div>
           </div>
-          <pre class="highlight"><code>\\
-            <% for line in diff.lines %>\\
-              <% if line.type == :folded %>\\
-                <div class="line folded">\\
-                  <%= line.hl_source.gsub('<span class="err">…</span>', '…') %>\\
-                </div>\\
-              <% else %>\\
-                <% tag = {unchanged: :div, added: :ins, removed: :del}[line.type] %>\\
-                <% tag = :div if diff.is_new_file %>\\
-                <<%= tag %> class="line">\\
-                  <%= line.hl_source %>\\
-                </<%= tag %>>\\
-              <% end %>\\
-            <% end %>\\
-          </code></pre>
-        </div>
+        <% end %>
+      </div>
+    TEMPLATE
+
+    PAGE["md"] = <<~TEMPLATE
+      <%= content %>
+    TEMPLATE
+
+    STEP["md"] = <<~TEMPLATE
+      ## <%= number %>. <%= summary %>
+
+      <% for diff in diffs %>\\
+      ```diff
+       // <%= diff.filename %>
+      <% for line in diff.lines %>\\
+      <%= { added: '+', removed: '-', unchanged: ' ', folded: '@' }[line.type] + line.source %>
+      <% end %>\\
+      ```
       <% end %>
     TEMPLATE
 
