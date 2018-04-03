@@ -25,10 +25,10 @@ module Leg
         if @git.commit!(amend: true, no_rebase: @opts[:stay])
           unless @opts[:stay]
             git_to_litdiff!
-            puts "Success!"
+            output "Success!\n"
           end
         else
-          puts "Looks like you've got a conflict to resolve!"
+          output "Looks like you've got a conflict to resolve!\n"
         end
       end
     end

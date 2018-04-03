@@ -20,14 +20,12 @@ module Leg
       end
 
       def run
-        args = @opts[:quiet] ? ["--quiet"] : []
-
         needs! :config, :repo
 
         tutorial = @git.load!(full_diffs: true, diffs_ignore_whitespace: true) do |step_num|
-          print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+          output "\r\e[K[repo/ -> Tutorial] Step #{step_num}"
         end
-        puts unless @opts[:quiet]
+        output "\n"
 
         num_steps = tutorial.num_steps
 
@@ -44,9 +42,9 @@ module Leg
           end
 
           tutorial.transform_diffs(transformers) do |step_num|
-            print "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+            output "\r\e[K[Transform diffs] Step #{step_num}/#{num_steps}"
           end
-          puts unless @opts[:quiet]
+          output "\n"
         end
 
         templates = Dir[File.join(@config.path, "template{,-?*}")].map do |template_dir|
@@ -76,12 +74,12 @@ module Leg
             step_template.gsub!(/\\\s*/, "")
 
             tutorial.pages.each do |page|
-              print "\r\e[K[Tutorial -> build/] Page #{page.filename}" unless @opts[:quiet]
+              output "\r\e[K[Tutorial -> build/] Page #{page.filename}"
 
-              output = Leg::Template.render_page(page_template, step_template, format, page, tutorial, @config)
-              File.write("build/#{format}/#{page.filename}.#{format}", output)
+              content = Leg::Template.render_page(page_template, step_template, format, page, tutorial, @config)
+              File.write("build/#{format}/#{page.filename}.#{format}", content)
             end
-            puts unless @opts[:quiet]
+            output "\n"
 
             if template_dir
               FileUtils.cd(template_dir) do
@@ -93,8 +91,8 @@ module Leg
 
                   # XXX: currently only processes top-level ERB template files.
                   if name.end_with? ".erb"
-                    output = Leg::Template.render(File.read(f), tutorial, @config)
-                    File.write("../build/#{format}/#{name[0..-5]}", output)
+                    content = Leg::Template.render(File.read(f), tutorial, @config)
+                    File.write("../build/#{format}/#{name[0..-5]}", content)
                   else
                     FileUtils.cp_r(f, "../build/#{format}/#{name}")
                   end
@@ -103,8 +101,8 @@ module Leg
             end
 
             if include_default_css && !File.exist?("build/#{format}/style.css")
-              output = Leg::Template.render(Leg::DefaultTemplates::CSS, tutorial, @config)
-              File.write("build/#{format}/style.css", output)
+              content = Leg::Template.render(Leg::DefaultTemplates::CSS, tutorial, @config)
+              File.write("build/#{format}/style.css", content)
             end
           end
         end

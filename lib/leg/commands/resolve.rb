@@ -21,9 +21,9 @@ module Leg
 
         if @git.resolve!
           git_to_litdiff!
-          puts "Success!"
+          output "Success!\n"
         else
-          puts "Looks like you've got a conflict to resolve!"
+          output "Looks like you've got a conflict to resolve!\n"
         end
       end
     end

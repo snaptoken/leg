@@ -1,7 +1,7 @@
 module Leg
   module Commands
     class BaseCommand
-      attr_reader :config
+      attr_reader :config, :opts
 
       def initialize(args, config)
         @args = args
@@ -61,32 +61,36 @@ module Leg
         end
       end
 
+      def output(text)
+        print text unless @opts[:quiet]
+      end
+
       def git_to_litdiff!
         tutorial = @git.load! do |step_num|
-          print "\r\e[K[repo/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+          output "\r\e[K[repo/ -> Tutorial] Step #{step_num}"
         end
-        puts unless @opts[:quiet]
+        output "\n"
 
         num_steps = tutorial.num_steps
         @litdiff.save!(tutorial) do |step_num|
-          print "\r\e[K[Tutorial -> doc/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+          output "\r\e[K[Tutorial -> doc/] Step #{step_num}/#{num_steps}"
         end
-        puts unless @opts[:quiet]
+        output "\n"
 
         @config.synced!
       end
 
       def litdiff_to_git!
         tutorial = @litdiff.load! do |step_num|
-          print "\r\e[K[doc/ -> Tutorial] Step #{step_num}" unless @opts[:quiet]
+          output "\r\e[K[doc/ -> Tutorial] Step #{step_num}"
         end
-        puts unless @opts[:quiet]
+        output "\n"
 
         num_steps = tutorial.num_steps
         @git.save!(tutorial) do |step_num|
-          print "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}" unless @opts[:quiet]
+          output "\r\e[K[Tutorial -> repo/] Step #{step_num}/#{num_steps}"
         end
-        puts unless @opts[:quiet]
+        output "\n"
 
         @config.synced!
       end

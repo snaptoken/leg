@@ -1,6 +1,8 @@
 module Leg
   class CLI
-    def initialize
+    def initialize(options = {})
+      @options = options
+
       initial_dir = FileUtils.pwd
 
       @config = nil
@@ -29,10 +31,11 @@ module Leg
       end
 
       if cmd = Leg::Commands::LIST.find { |cmd| cmd.name == cmd_name }
-        cmd.new(args, @config).run
+        command = cmd.new(args, @config)
+        command.opts[:quiet] = true if @options[:force_quiet]
+        command.run
       else
         puts "There is no '#{cmd_name}' command. Run `leg help` for help."
-        1
       end
     end
   end
