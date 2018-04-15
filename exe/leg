@@ -3,4 +3,4 @@
 require 'leg'
 
 status = Leg::CLI.new.run(ARGV)
-exit(status) if status == false
+exit! if status == false

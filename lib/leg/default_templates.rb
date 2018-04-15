@@ -221,66 +221,92 @@ module Leg
         font-size: 80%;
       }
 
-      .diff code {
-        font-size: 14px;
-        line-height: 20px;
-        background-color: none;
-        padding: 0;
-        margin-bottom: 18px;
-        white-space: inherit;
+      .step {
+        margin-top: 18px;
       }
 
-      .diff pre {
-        background-color: #fffcfa;
-        padding: 5px 0;
+      .step-number {
+        position: absolute;
+        margin-top: -6px;
+        margin-left: -148px;
+        font-size: 48px;
+        font-family: Helvetica, sans-serif;
+        line-height: 130%;
+        width: 128px;
+        text-align: right;
       }
 
       .diff {
         border: 1px solid #ede7e3;
         border-radius: 3px;
-        margin-top: 18px;
       }
 
       .diff .diff-header {
         display: flex;
         justify-content: space-between;
-        padding: 0 5px;
-        background-color: #ede7e3;
+        align-items: center;
+        padding: 7px 10px;
+        background-color: #fafbfc;
+        border-bottom: 1px solid #ede7e3;
         font-size: 16px;
+      }
+
+      .diff .diff-summary {
         color: #666;
+        font-size: 18px;
       }
 
-      .diff .step-number {
+      .diff .diff-summary p {
+        margin-top: 0;
+      }
+
+      .diff .diff-filename {
+        color: #666;
         font-weight: bold;
       }
 
-      .diff .step-filename {
-        font-weight: bold;
+      .diff table {
+        width: 100%;
+        border-spacing: 0;
+        border-collapse: collapse;
       }
 
-      .diff .step-name {
-        font-family: monospace;
-        font-size: 12px;
-      }
-
-      .diff .line {
-        display: block;
+      .diff tr {
         height: 20px;
+        line-height: 20px;
         padding: 0 5px;
-        position: relative;
+        background-color: #fff;
+        font-family: monospace;
+        font-size: 14px;
       }
 
-      .diff .line.folded {
+      .diff td.line-number {
+        width: 1%;
+        min-width: 55px;
+        text-align: right;
+        padding-right: 15px;
+        background-color: #fafbfc;
+        color: #ccc;
+      }
+
+      .diff td.line {
+        white-space: pre;
+        position: relative;
+        background-color: inherit;
+        padding-left: 5px;
+      }
+
+      .diff td.line.folded {
         background-color: #eef;
         opacity: 0.5;
       }
 
-      .diff ins.line {
+      .diff td.line.added {
         background-color: #ffd;
         text-decoration: none;
       }
 
-      .diff del.line {
+      .diff td.line.removed {
         background-color: #fdd;
         text-decoration: line-through;
       }
@@ -298,16 +324,16 @@ module Leg
           padding: 0 5px;
         }
 
-        .highlight {
+        .diff .diff-code {
           overflow-x: scroll;
         }
 
-        .diff .line {
+        .diff .table {
           width: 700px;
         }
       }
 
-      <%= syntax_highlighting_css ".highlight" %>
+      <%= syntax_highlighting_css ".line" %>
     TEMPLATE
   end
 end

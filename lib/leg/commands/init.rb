@@ -10,7 +10,7 @@ module Leg
       end
 
       def self.usage
-        ""
+        "[new-dir]"
       end
 
       def setopts!(o)
@@ -19,14 +19,23 @@ module Leg
       def run
         if @config
           puts "You are already in a leg working directory."
-          return 1
+          return false
+        end
+
+        if new_dir = @args.first
+          if File.exist?(new_dir)
+            puts "Error: directory already exists."
+            return false
+          end
+          FileUtils.mkdir(new_dir)
+          FileUtils.cd(new_dir)
         end
 
         FileUtils.mkdir_p(".leg/repo")
         FileUtils.mkdir_p("step")
         FileUtils.mkdir_p("doc")
         File.write("doc/tutorial.litdiff", "")
-        File.write("leg.yml", "---")
+        File.write("leg.yml", "---\n")
 
         config = Leg::Config.new(FileUtils.pwd)
         git = Leg::Representations::Git.new(config)
