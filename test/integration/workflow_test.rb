@@ -140,7 +140,6 @@ MARKDOWN = <<~END
 
 ```diff
  // hello.c
--int main(void) {}
 +int main(int argc, char *argv[]) {
 +  return 0;
 +}
@@ -152,7 +151,7 @@ MARKDOWN = <<~END
  // hello.c
  int main(int argc, char *argv[]) {
 +  printf("Hello, world!\\n");
-+
+ \\
    return 0;
  }
 ```
@@ -161,12 +160,8 @@ MARKDOWN = <<~END
 
 ```diff
  // hello.c
- int main(int argc, char *argv[]) {
-   printf("Hello, world!\\n");
+@int main(int argc, char *argv[]) { … }
  \\
-   return 0;
- }
-+
 +// the end
 ```
 
@@ -175,12 +170,8 @@ MARKDOWN = <<~END
 ```diff
  // hello.c
 +#include <stdio.h>
-+
- int main(int argc, char *argv[]) {
-   printf("Hello, world!\\n");
  \\
-   return 0;
- }
+@int main(int argc, char *argv[]) { … }
  \\
  // the end
 ```

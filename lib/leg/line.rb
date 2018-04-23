@@ -64,5 +64,36 @@ module Leg
         "+#{@source}\n"
       end
     end
+
+    class Removed < Line
+      def line_number
+        @line_numbers[0]
+      end
+
+      def to_patch(options = {})
+        "-#{@source}\n"
+      end
+    end
+
+    class Unchanged < Line
+      def line_number
+        @line_numbers[1]
+      end
+
+      def to_patch(options = {})
+        char = options[:unchanged_char] || " "
+        "#{char}#{@source}\n"
+      end
+    end
+
+    class Folded < Line
+      def line_number
+        @line_numbers[0]
+      end
+
+      def to_patch(options = {})
+        raise "can't convert folded line to patch"
+      end
+    end
   end
 end

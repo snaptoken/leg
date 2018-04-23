@@ -24,6 +24,12 @@ module Leg
           end
         end
 
+        if saw_added_line
+          removed_lines.each do |removed_idx|
+            new_diff.lines[removed_idx] = nil
+          end
+        end
+
         new_diff.lines.compact!
         new_diff
       end

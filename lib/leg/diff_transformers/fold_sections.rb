@@ -56,7 +56,7 @@ module Leg
 
               line_numbers = [start_line.line_number, end_line.line_number]
 
-              folded_line = Leg::Line.new(:folded, summary, line_numbers)
+              folded_line = Leg::Line::Folded.new(:folded, summary, line_numbers)
 
               section.to_range.each do |idx|
                 new_diff.lines[idx] = nil

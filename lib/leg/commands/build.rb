@@ -29,6 +29,20 @@ module Leg
 
         num_steps = tutorial.num_steps
 
+        if @config.options[:diff_transformers].nil?
+          @config.options[:diff_transformers] = [
+            { 'FoldSections' => {
+              unfold_before_new_section: true,
+              section_types: [
+                { name: 'comments', start: "^/\\*\\*\\*.+\\*\\*\\*/$", end: nil },
+                { name: 'braces', start: "^\\S.*{$", end: "^}( \\w+)?;?$" }
+              ]
+            }},
+            'TrimBlankLines',
+            'OmitAdjacentRemovals'
+          ]
+        end
+
         if @config.options[:diff_transformers]
           transformers = @config.options[:diff_transformers].map do |transformer_config|
             if transformer_config.is_a? String

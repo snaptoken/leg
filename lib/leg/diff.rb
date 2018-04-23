@@ -80,7 +80,7 @@ module Leg
             line_nums = [old_line_num, new_line_num]
             old_line_num += 1
             new_line_num += 1
-            cur_diff << Leg::Line.new(:unchanged, line[1..-1], line_nums)
+            cur_diff << Leg::Line::Unchanged.new(:unchanged, line[1..-1], line_nums)
           when '+'
             line_nums = [nil, new_line_num]
             new_line_num += 1
@@ -88,7 +88,7 @@ module Leg
           when '-'
             line_nums = [old_line_num, nil]
             old_line_num += 1
-            cur_diff << Leg::Line.new(:removed, line[1..-1], line_nums)
+            cur_diff << Leg::Line::Removed.new(:removed, line[1..-1], line_nums)
           end
         else
           in_diff = false
