@@ -80,15 +80,15 @@ module Leg
             line_nums = [old_line_num, new_line_num]
             old_line_num += 1
             new_line_num += 1
-            cur_diff << Leg::Line::Unchanged.new(:unchanged, line[1..-1], line_nums)
+            cur_diff << Leg::Line::Unchanged.new(line[1..-1], line_nums)
           when '+'
             line_nums = [nil, new_line_num]
             new_line_num += 1
-            cur_diff << Leg::Line::Added.new(:added, line[1..-1], line_nums)
+            cur_diff << Leg::Line::Added.new(line[1..-1], line_nums)
           when '-'
             line_nums = [old_line_num, nil]
             old_line_num += 1
-            cur_diff << Leg::Line::Removed.new(:removed, line[1..-1], line_nums)
+            cur_diff << Leg::Line::Removed.new(line[1..-1], line_nums)
           end
         else
           in_diff = false
@@ -133,8 +133,8 @@ module Leg
       old_line ||= 1
       new_line ||= 1
 
-      old_count = hunk.count { |line| [:removed, :unchanged].include? line.type }
-      new_count = hunk.count { |line| [:added, :unchanged].include? line.type }
+      old_count = hunk.count { |line| [Leg::Line::Removed, Leg::Line::Unchanged].include? line.class }
+      new_count = hunk.count { |line| [Leg::Line::Added, Leg::Line::Unchanged].include? line.class }
 
       old_line = 0 if old_count == 0
       new_line = 0 if new_count == 0
@@ -149,15 +149,15 @@ module Leg
       cur_hunk = [@lines.first]
       cur_line_nums = @lines.first.line_numbers.dup
       @lines[1..-1].each do |line|
-        case line.type
-        when :unchanged
+        case line
+        when Leg::Line::Unchanged
           cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : (cur_line_nums[0] + 1)
           cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : (cur_line_nums[1] + 1)
-        when :added
+        when Leg::Line::Added
           cur_line_nums[1] = cur_line_nums[1].nil? ? line.line_numbers[1] : (cur_line_nums[1] + 1)
-        when :removed
+        when Leg::Line::Removed
           cur_line_nums[0] = cur_line_nums[0].nil? ? line.line_numbers[0] : (cur_line_nums[0] + 1)
-        when :folded
+        when Leg::Line::Folded
           raise "can't create patch from diff with folded lines"
         end
 

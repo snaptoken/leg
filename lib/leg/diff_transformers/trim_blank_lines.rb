@@ -13,7 +13,7 @@ module Leg
             next_changed = next_line && [:added, :removed].include?(next_line.type)
 
             if !prev_changed || !next_changed
-              line.type = :unchanged
+              line = Leg::Line::Unchanged.new(line.source, line.line_numbers)
             end
           end
           new_diff.lines << line
