@@ -44,6 +44,7 @@ module Leg
         </div>
 
         <% for diff in diffs %>
+          <% diff = Leg::DiffTransformers::SyntaxHighlight.new.transform(diff) %>
           <div class="diff">
             <div class="diff-header">
               <div class="diff-summary">
@@ -62,9 +63,9 @@ module Leg
                   </td>
                   <td class="line <%= diff.is_new_file ? :unchanged : line.type %>">\\
                     <% if line.type == :folded %>\\
-                      <%= line.hl_source.gsub('<span class="err">…</span>', '…') %>\\
+                      <%= line.source.gsub('<span class="err">…</span>', '…') %>\\
                     <% else %>\\
-                      <%= line.hl_source %>\\
+                      <%= line.source %>\\
                     <% end %>\\
                   </td>
                 </tr>

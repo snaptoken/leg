@@ -1,6 +1,6 @@
 module Leg
   class Line
-    attr_accessor :source, :hl_source, :line_numbers
+    attr_accessor :source, :line_numbers
 
     def initialize(source, line_numbers)
       @source = source.chomp
@@ -8,9 +8,7 @@ module Leg
     end
 
     def clone
-      line = self.class.new(@source.dup, @line_numbers.dup)
-      line.hl_source = @hl_source.dup
-      line
+      self.class.new(@source.dup, @line_numbers.dup)
     end
 
     def blank?

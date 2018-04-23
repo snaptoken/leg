@@ -12,9 +12,5 @@ module Leg
     def to_patch(options = {})
       @diffs.map { |diff| diff.to_patch(options) }.join("\n")
     end
-
-    def syntax_highlight!
-      @diffs.each(&:syntax_highlight!)
-    end
   end
 end

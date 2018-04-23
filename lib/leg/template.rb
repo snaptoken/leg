@@ -15,7 +15,6 @@ module Leg
           content << output
         end
 
-        step.syntax_highlight!
         content << Leg::Template.render_step(step_template, step, tutorial, config)
       end
       if page.footer_text

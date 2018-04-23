@@ -1,24 +1,19 @@
 module Leg
   class Diff
-    attr_accessor :filename, :is_new_file, :lines, :syntax_highlighted
+    attr_accessor :filename, :is_new_file, :lines
 
     def initialize(filename = nil, is_new_file = false, lines = [])
       @filename = filename
       @is_new_file = is_new_file
       @lines = lines
-      @syntax_highlighted = false
     end
 
     def clone
-      diff = Leg::Diff.new(@filename.dup, @is_new_file, @lines.map(&:clone))
-      diff.syntax_highlighted = @syntax_highlighted
-      diff
+      Leg::Diff.new(@filename.dup, @is_new_file, @lines.map(&:clone))
     end
 
     def clone_empty
-      diff = Leg::Diff.new(@filename.dup, @is_new_file, [])
-      diff.syntax_highlighted = @syntax_highlighted
-      diff
+      Leg::Diff.new(@filename.dup, @is_new_file, [])
     end
 
     # Append a Line to the Diff.
@@ -96,33 +91,6 @@ module Leg
       end
 
       diffs
-    end
-
-    class HTMLLineByLine < Rouge::Formatter
-      def initialize(formatter)
-        @formatter = formatter
-      end
-
-      def stream(tokens, &b)
-        token_lines(tokens) do |line|
-          line.each do |tok, val|
-            yield @formatter.span(tok, val)
-          end
-          yield "\n"
-        end
-      end
-    end
-
-    SYNTAX_HIGHLIGHTER = HTMLLineByLine.new(Rouge::Formatters::HTML.new)
-
-    def syntax_highlight!
-      return if @syntax_highlighted
-      code = @lines.map(&:source).join("\n") + "\n"
-      lexer = Rouge::Lexer.guess(filename: @filename, source: code)
-      SYNTAX_HIGHLIGHTER.format(lexer.lex(code)).lines.each.with_index do |line_hl, idx|
-        @lines[idx].hl_source = line_hl
-      end
-      @syntax_highlighted = true
     end
 
     private
