@@ -166,7 +166,13 @@ module Leg
         remaining_commits = repo.branches["master"] ? commits(after: repo.head.target.oid).map(&:oid) : []
         FileUtils.cd(repo_path) do
           `git add -A`
-          `git commit #{'--amend' if options[:amend]} -m"TODO: let user specify commit message"`
+
+          cmd = ["git", "commit", "-q"]
+          cmd << "--amend" if options[:amend]
+          cmd << "-m" << options[:message] if options[:message]
+          cmd << "--no-edit" if options[:use_default_message] && options[:amend]
+          cmd << "-m" << "Untitled step" if options[:use_default_message] && !options[:amend]
+          system(*cmd)
         end
         if options[:amend]
           save_state(load_state.amend!)

@@ -14,6 +14,12 @@ module Leg
       end
 
       def setopts!(o)
+        o.on("-m", "--message MESSAGE", "Set the step summary to MESSAGE") do |m|
+          @opts[:message] = m
+        end
+        o.on("-d", "--default-message", "Leave the step summary unchanged, or set it to a default if empty") do |d|
+          @opts[:default_message] = d
+        end
         o.on("-s", "--stay", "Don't resolve rest of steps yet") do |s|
           @opts[:stay] = s
         end
@@ -22,7 +28,13 @@ module Leg
       def run
         needs! :config, :repo
 
-        if @git.commit!(no_rebase: @opts[:stay])
+        commit_options = {
+          no_rebase: @opts[:stay],
+          message: @opts[:message],
+          use_default_message: @opts[:default_message]
+        }
+
+        if @git.commit!(commit_options)
           unless @opts[:stay]
             git_to_litdiff!
             output "Success!\n"

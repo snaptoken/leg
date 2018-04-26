@@ -75,7 +75,7 @@ STEP_5C = <<~END
 END
 
 LITDIFF = <<~END
-~~~ TODO: let user specify commit message
+~~~ Main function
 diff --git a/hello.c b/hello.c
 new file mode 100644
 --- /dev/null
@@ -83,7 +83,7 @@ new file mode 100644
 @@ -0,0 +1,1 @@
 +int main(void) {}
 
-~~~ TODO: let user specify commit message
+~~~ Return zero
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -93,7 +93,7 @@ diff --git a/hello.c b/hello.c
 +  return 0;
 +}
 
-~~~ TODO: let user specify commit message
+~~~ Print message
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -104,7 +104,7 @@ diff --git a/hello.c b/hello.c
 |  return 0;
 |}
 
-~~~ TODO: let user specify commit message
+~~~ Add comment
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -115,7 +115,7 @@ diff --git a/hello.c b/hello.c
 +
 +// the end
 
-~~~ TODO: let user specify commit message
+~~~ Include <stdio.h>
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -129,14 +129,14 @@ diff --git a/hello.c b/hello.c
 END
 
 MARKDOWN = <<~END
-## 1. TODO: let user specify commit message
+## 1. Main function
 
 ```diff
  // hello.c
 +int main(void) {}
 ```
 
-## 2. TODO: let user specify commit message
+## 2. Return zero
 
 ```diff
  // hello.c
@@ -145,7 +145,7 @@ MARKDOWN = <<~END
 +}
 ```
 
-## 3. TODO: let user specify commit message
+## 3. Print message
 
 ```diff
  // hello.c
@@ -156,7 +156,7 @@ MARKDOWN = <<~END
  }
 ```
 
-## 4. TODO: let user specify commit message
+## 4. Add comment
 
 ```diff
  // hello.c
@@ -165,7 +165,7 @@ MARKDOWN = <<~END
 +// the end
 ```
 
-## 5. TODO: let user specify commit message
+## 5. Include <stdio.h>
 
 ```diff
  // hello.c
@@ -189,16 +189,16 @@ class WorkflowTest < Minitest::Test
       leg_command "init"
 
       File.write("step/hello.c", STEP_1)
-      leg_command "commit"
+      leg_command "commit", "-m", "Main function"
 
       File.write("step/hello.c", STEP_2)
-      leg_command "commit"
+      leg_command "commit", "-m", "Return zero"
 
       File.write("step/hello.c", STEP_3)
-      leg_command "commit"
+      leg_command "commit", "-m", "Print message"
 
       File.write("step/hello.c", STEP_4)
-      leg_command "commit"
+      leg_command "commit", "-m", "Include <stdio.h>"
 
       leg_command "1"
       assert_equal STEP_1, File.read("step/hello.c")
@@ -216,7 +216,7 @@ class WorkflowTest < Minitest::Test
       assert_equal STEP_2, File.read("step/hello.c")
 
       File.write("step/hello.c", STEP_2B)
-      leg_command "amend"
+      leg_command "amend", "-d"
       assert_includes File.read("step/hello.c"), "<<<<<<< HEAD"
 
       File.write("step/hello.c", STEP_3B)
@@ -243,7 +243,7 @@ class WorkflowTest < Minitest::Test
       assert_equal STEP_3B, File.read("step/hello.c")
 
       File.write("step/hello.c", STEP_4C)
-      leg_command "commit"
+      leg_command "commit", "-m", "Add comment"
       assert_equal STEP_5C, File.read("step/hello.c")
 
       assert_equal LITDIFF, File.read("doc/tutorial.litdiff")
