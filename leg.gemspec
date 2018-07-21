@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'rugged', '0.25.1.1'
+  spec.add_runtime_dependency 'rugged', '0.27.2'
   spec.add_runtime_dependency 'redcarpet', '3.4.0'
   spec.add_runtime_dependency 'rouge', '2.0.7'
 
