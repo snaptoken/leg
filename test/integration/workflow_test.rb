@@ -75,7 +75,7 @@ STEP_5C = <<~END
 END
 
 LITDIFF = <<~END
-~~~ Main function
+~~~ 1. Main function
 diff --git a/hello.c b/hello.c
 new file mode 100644
 --- /dev/null
@@ -83,7 +83,7 @@ new file mode 100644
 @@ -0,0 +1,1 @@
 +int main(void) {}
 
-~~~ Return zero
+~~~ 2. Return zero
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -93,7 +93,7 @@ diff --git a/hello.c b/hello.c
 +  return 0;
 +}
 
-~~~ Print message
+~~~ 3. Print message
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -104,7 +104,7 @@ diff --git a/hello.c b/hello.c
 |  return 0;
 |}
 
-~~~ Add comment
+~~~ 4. Add comment
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
@@ -115,7 +115,7 @@ diff --git a/hello.c b/hello.c
 +
 +// the end
 
-~~~ Include <stdio.h>
+~~~ 5. Include <stdio.h>
 diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c

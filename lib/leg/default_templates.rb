@@ -109,7 +109,7 @@ module Leg
       }
 
       #container {
-        width: 700px;
+        width: 750px;
         margin: 18px auto;
       }
 

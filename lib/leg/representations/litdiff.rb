@@ -10,7 +10,7 @@ module Leg
           output = ""
           page.steps.each do |step|
             output << step.text << "\n\n" unless step.text.empty?
-            output << "~~~ #{step.summary}\n"
+            output << "~~~ #{step_num}. #{step.summary}\n"
             output << step.to_patch(unchanged_char: "|") << "\n"
 
             yield step_num if block_given?
@@ -36,8 +36,8 @@ module Leg
             cur_diff = nil
             cur_summary = nil
             while line = f.gets
-              if line.start_with? "~~~"
-                cur_summary = (line[3..-1] || "").strip
+              if line =~ /^~~~\s*(\d+\.)?(.+)$/
+                cur_summary = $2.strip
                 cur_diff = ""
               elsif cur_diff
                 if line.chomp.empty?
