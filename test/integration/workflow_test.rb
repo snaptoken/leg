@@ -76,15 +76,12 @@ END
 
 LITDIFF = <<~END
 ~~~ 1. Main function
-diff --git a/hello.c b/hello.c
-new file mode 100644
 --- /dev/null
 +++ b/hello.c
 @@ -0,0 +1,1 @@
 +int main(void) {}
 
 ~~~ 2. Return zero
-diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
 @@ -1,1 +1,3 @@
@@ -94,7 +91,6 @@ diff --git a/hello.c b/hello.c
 +}
 
 ~~~ 3. Print message
-diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
 @@ -1,3 +1,5 @@
@@ -105,7 +101,6 @@ diff --git a/hello.c b/hello.c
 |}
 
 ~~~ 4. Add comment
-diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
 @@ -3,3 +3,5 @@
@@ -116,7 +111,6 @@ diff --git a/hello.c b/hello.c
 +// the end
 
 ~~~ 5. Include <stdio.h>
-diff --git a/hello.c b/hello.c
 --- a/hello.c
 +++ b/hello.c
 @@ -1,3 +1,5 @@

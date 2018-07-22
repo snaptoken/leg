@@ -11,7 +11,7 @@ module Leg
           page.steps.each do |step|
             output << step.text << "\n\n" unless step.text.empty?
             output << "~~~ #{step_num}. #{step.summary}\n"
-            output << step.to_patch(unchanged_char: "|") << "\n"
+            output << step.to_patch(unchanged_char: "|", strip_git_lines: true) << "\n"
 
             yield step_num if block_given?
             step_num += 1

@@ -26,9 +26,10 @@ module Leg
     end
 
     def to_patch(options = {})
-      patch = "diff --git a/#{@filename} b/#{@filename}\n"
+      patch = ""
+      patch += "diff --git a/#{@filename} b/#{@filename}\n" unless options[:strip_git_lines]
       if @is_new_file
-        patch += "new file mode 100644\n"
+        patch += "new file mode 100644\n" unless options[:strip_git_lines]
         patch += "--- /dev/null\n"
       else
         patch += "--- a/#{@filename}\n"
@@ -55,13 +56,15 @@ module Leg
       diffs = []
 
       git_diff.lines.each do |line|
-        if line =~ /^diff --git (\S+) (\S+)$/
-          filename = $2.split("/")[1..-1].join("/")
-          cur_diff = Leg::Diff.new(filename)
+        if line =~ /^--- (.+)$/
+          cur_diff = Leg::Diff.new
+          if $1 == '/dev/null'
+            cur_diff.is_new_file = true
+          end
           diffs << cur_diff
           in_diff = false
-        elsif !in_diff && line.start_with?('new file')
-          cur_diff.is_new_file = true
+        elsif line =~ /^\+\+\+ (.+)$/
+          cur_diff.filename = $1.split("/")[1..-1].join("/")
         elsif line =~ /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
           # TODO: somehow preserve function name that comes to the right of the @@ header?
           in_diff = true
