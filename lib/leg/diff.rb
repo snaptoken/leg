@@ -32,9 +32,9 @@ module Leg
         patch += "new file mode 100644\n" unless options[:strip_git_lines]
         patch += "--- /dev/null\n"
       else
-        patch += "--- a/#{@filename}\n"
+        patch += "--- #{'a/' unless options[:strip_git_lines]}#{@filename}\n"
       end
-      patch += "+++ b/#{@filename}\n"
+      patch += "+++ #{'b/' unless options[:strip_git_lines]}#{@filename}\n"
 
       find_hunks.each do |hunk|
         patch += hunk_header(hunk)
@@ -64,7 +64,7 @@ module Leg
           diffs << cur_diff
           in_diff = false
         elsif line =~ /^\+\+\+ (.+)$/
-          cur_diff.filename = $1.split("/")[1..-1].join("/")
+          cur_diff.filename = $1.strip.sub(/^b\//, '')
         elsif line =~ /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
           # TODO: somehow preserve function name that comes to the right of the @@ header?
           in_diff = true

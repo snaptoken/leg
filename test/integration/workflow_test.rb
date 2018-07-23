@@ -77,13 +77,13 @@ END
 LITDIFF = <<~END
 ~~~ 1. Main function
 --- /dev/null
-+++ b/hello.c
++++ hello.c
 @@ -0,0 +1,1 @@
 +int main(void) {}
 
 ~~~ 2. Return zero
---- a/hello.c
-+++ b/hello.c
+--- hello.c
++++ hello.c
 @@ -1,1 +1,3 @@
 -int main(void) {}
 +int main(int argc, char *argv[]) {
@@ -91,8 +91,8 @@ LITDIFF = <<~END
 +}
 
 ~~~ 3. Print message
---- a/hello.c
-+++ b/hello.c
+--- hello.c
++++ hello.c
 @@ -1,3 +1,5 @@
 |int main(int argc, char *argv[]) {
 +  printf("Hello, world!\\n");
@@ -101,8 +101,8 @@ LITDIFF = <<~END
 |}
 
 ~~~ 4. Add comment
---- a/hello.c
-+++ b/hello.c
+--- hello.c
++++ hello.c
 @@ -3,3 +3,5 @@
 |
 |  return 0;
@@ -111,8 +111,8 @@ LITDIFF = <<~END
 +// the end
 
 ~~~ 5. Include <stdio.h>
---- a/hello.c
-+++ b/hello.c
+--- hello.c
++++ hello.c
 @@ -1,3 +1,5 @@
 +#include <stdio.h>
 +
