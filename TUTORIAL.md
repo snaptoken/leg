@@ -1,5 +1,11 @@
 # Creating a step-by-step programming tutorial with `leg`
 
+Install `leg` (you'll need Ruby for this):
+
+```sh
+$ gem install leg
+```
+
 Create a project folder for your tutorial, `cd` into it, and run `leg init`.
 
 ```sh
@@ -43,7 +49,7 @@ while (n <= 100) {
 }
 ```
 
-Save it, and then run `leg commit`. Your tutorial now has 2 steps! 
+Save it, and then run `leg commit`. Your tutorial now has 2 steps!
 
 ## Rendering the tutorial
 
