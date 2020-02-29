@@ -15,7 +15,7 @@ GEM
     pry (0.11.3)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
-    rake (10.5.0)
+    rake (13.0.1)
     redcarpet (3.4.0)
     rouge (2.0.7)
     rugged (0.27.2)
@@ -28,7 +28,7 @@ DEPENDENCIES
   leg!
   minitest (~> 5.0)
   pry
-  rake (~> 10.0)
+  rake (~> 13.0)
 
 BUNDLED WITH
    1.16.1
