@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency 'rugged', '0.27.2'
-  spec.add_runtime_dependency 'redcarpet', '3.4.0'
+  spec.add_runtime_dependency 'redcarpet', '3.5.1'
   spec.add_runtime_dependency 'rouge', '2.0.7'
 
   spec.add_development_dependency "bundler", "~> 1.16"

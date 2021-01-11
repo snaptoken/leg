@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     leg (0.0.1)
-      redcarpet (= 3.4.0)
+      redcarpet (= 3.5.1)
       rouge (= 2.0.7)
       rugged (= 0.27.2)
 
@@ -16,7 +16,7 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
     rake (10.5.0)
-    redcarpet (3.4.0)
+    redcarpet (3.5.1)
     rouge (2.0.7)
     rugged (0.27.2)
 
